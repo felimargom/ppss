@@ -1,4 +1,4 @@
-ppss_admin_settings:
+ppss.admin_settings:
   path: /admin/config/services/ppss
   defaults: 
     _form: \Drupal\ppss\Form\PPSSFormSettings
