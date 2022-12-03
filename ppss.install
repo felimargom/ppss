@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the ppss module.
+ */
+
+function ppss_schema()
+{
+    // Create database table called 'ppss_sales' with the following colums:
+    // 1) id [serial], 2) uid [int], 3) mail [varchart], 4) details [varchart]
+    $schema['ppss_sales'] = [
+      'description' => 'Stores email, timestamp, uid  and details for the sale.',
+      'fields' => [
+        'id' => [
+          'description' => 'The primary identifier for the record.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ],
+        'uid' => [
+          'description' => 'The {users}.uid That added this sale.',
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'mail' => [
+          'description' => "The {users}.email address.",
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => FALSE,
+          'default' => '',
+        ],
+        'platform' => [
+          'description' => "The platform service used to make payment.",
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+          'default' => 'PayPal',
+        ],
+        'details' => [
+          'description' => "Transaction details returned by PayPal.",
+          'type' => 'varchar',
+          'length' => 4096,
+          'not null' => TRUE,
+          'default' => '',
+        ],
+        'created' => [
+          'description' => 'Timestamp for when sale was created.',
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['id'],
+      'indexes' => [
+        'user' => ['uid'],
+      ],
+    ];
+  return $schema;
+}
