@@ -1,0 +1,10 @@
+payment_type:
+  - PayPal
+client_id: ''
+client_secret: ''
+sandbox_mode: true
+field_price: ''
+field_description: ''
+field_sku: ''
+currency_code: 'MXN'
+tax: '16.0 %'
