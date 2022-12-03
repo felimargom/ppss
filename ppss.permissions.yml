@@ -1,0 +1,7 @@
+view ppss button:
+  title: View PPSS Button
+  description: View the PPSS button form.
+administer ppss:
+  title: Administer PPSS Settings
+  description: Access the Platform of Payments and Sales Simple administrative settings page.
+  restrict access: true
