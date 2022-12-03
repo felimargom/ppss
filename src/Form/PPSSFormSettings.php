@@ -20,7 +20,7 @@ class PPSSFormSettings extends ConfigFormBase
   public function getFormId()
   {
     // Unique ID of the form.
-    return 'ppss_admin_settings';
+    return 'ppss.admin_settings';
   }
 
   /**
