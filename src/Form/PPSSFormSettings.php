@@ -20,7 +20,7 @@ class PPSSFormSettings extends ConfigFormBase
   public function getFormId()
   {
     // Unique ID of the form.
-    return 'ppss.admin_settings';
+    return 'ppss_admin_settings';
   }
 
   /**
@@ -38,63 +38,30 @@ class PPSSFormSettings extends ConfigFormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state)
   {
-    $types = ['PayPal', 'Dos', 'Tres'];
+    $nodeTypes = node_type_get_names();
+    $paymentGateways = ['PayPal' => 'PayPal'];
 
     // The settings needed was configured inside ppss.settings.yml file.
     $config = $this->config('ppss.settings');
     
-    // Start PalPal general settings.
-    $form['ppss_settings']['settings'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Settings'),
-    ];
-
-    $form['ppss_settings']['settings']['description'] = [
-      '#markup' => $this->t('Please refer to @link for your settings.', [
-        '@link' => Link::fromTextAndUrl($this->t('PayPal developer'),
-          Url::fromUri('https://developer.paypal.com/developer/applications/', [
-            'attributes' => [
-              'onclick' => "target='_blank'",
-          ],
-        ]))->toString(),
-      ]),
-    ];
-
-    $form['ppss_settings']['settings']['payment_type'] = [
+    // General settings.
+    $form['ppss_settings']['allowed_gateways'] = [
       '#type' => 'checkboxes',
-      '#title' => $this->t('Subscriptions was pay with PayPal.'),
-      '#options' => $types,
-      '#default_value' => $config->get('payment_type'),
-      '#description' => $this->t('Select the default payment type to show.'),
+      '#title' => $this->t('Subscriptions can be pay with all selected payments gateways.'),
+      '#options' => $paymentGateways,
+      '#default_value' => $config->get('allowed_gateways'),
+      '#description' => $this->t('Select all the payments gateways you like to use to enable for.'),
       '#required' => true,
     ];
 
-    $form['ppss_settings']['settings']['client_id'] = [
-      '#type' => 'textfield',
-      '#title' => t('PayPal Client ID'),
-      '#size' => 100,
-      '#default_value' => $config->get('client_id'),
-      '#description' => t("Your PayPal client id. It should be similar to:
-        AYSq3RDGsmBLJE-otTkBtM-jBRd1TCQwFf9RGfwddNXWz0uFU9ztymylOhRS"),
+    $form['ppss_settings']['content_types'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('The content types to enable PPSS button for'),
+      '#default_value' => $config->get('content_types'),
+      '#options' => $nodeTypes,
+      '#description' => $this->t('On the specified node types, an PPSS button
+        will be available and can be shown to make purchases.'),
       '#required' => true,
-    ];
-
-    $form['ppss_settings']['settings']['client_secret'] = [
-      '#type' => 'textfield',
-      '#title' => t('PayPal Client Secret'),
-      '#size' => 100,
-      '#default_value' => $config->get('client_secret'),
-      '#description' => t("Your PayPal client secret. If you don't know, please visiting
-        https://developer.paypal.com/developer/applications/ for help."),
-      '#required' => true,
-    ];
-
-    $form['ppss_settings']['settings']['sandbox_mode'] = [
-      '#title' => $this->t('Enable SandBox Mode'),
-      '#type' => 'checkbox',
-      '#default_value' => $config->get('sandbox_mode'),
-      '#description' => $this->t('Allways use the PayPal sandbox virtual testing
-        environment before go to production.'),
     ];
     
     // Start fields configuration.
@@ -162,7 +129,52 @@ class PPSSFormSettings extends ConfigFormBase
       '#description' => $this->t('Default tax to charge in all transactions.'),
       '#required' => true,
     ];
+    
+    // Start PalPal general settings.
+    $form['ppss_settings']['paypal_settings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('PayPal Settings'),
+    ];
 
+    $form['ppss_settings']['paypal_settings']['description'] = [
+      '#markup' => $this->t('Please refer to @link for your settings.', [
+        '@link' => Link::fromTextAndUrl($this->t('PayPal developer'),
+          Url::fromUri('https://developer.paypal.com/developer/applications/', [
+            'attributes' => [
+              'onclick' => "target='_blank'",
+          ],
+        ]))->toString(),
+      ]),
+    ];
+
+    $form['ppss_settings']['paypal_settings']['client_id'] = [
+      '#type' => 'textfield',
+      '#title' => t('PayPal Client ID'),
+      '#size' => 100,
+      '#default_value' => $config->get('client_id'),
+      '#description' => t("Your PayPal client id. It should be similar to:
+        AYSq3RDGsmBLJE-otTkBtM-jBRd1TCQwFf9RGfwddNXWz0uFU9ztymylOhRS"),
+      '#required' => true,
+    ];
+
+    $form['ppss_settings']['paypal_settings']['client_secret'] = [
+      '#type' => 'textfield',
+      '#title' => t('PayPal Client Secret'),
+      '#size' => 100,
+      '#default_value' => $config->get('client_secret'),
+      '#description' => t("Your PayPal client secret. If you don't know, please visiting
+        https://developer.paypal.com/developer/applications/ for help."),
+      '#required' => true,
+    ];
+
+    $form['ppss_settings']['paypal_settings']['sandbox_mode'] = [
+      '#title' => $this->t('Enable SandBox Mode'),
+      '#type' => 'checkbox',
+      '#default_value' => $config->get('sandbox_mode'),
+      '#description' => $this->t('Allways use the PayPal sandbox virtual testing
+        environment before go to production.'),
+    ];
+  
     return parent::buildForm($form, $form_state);
   }
 
@@ -172,14 +184,14 @@ class PPSSFormSettings extends ConfigFormBase
   public function submitForm(array &$form, FormStateInterface $form_state)
   {
     $config_keys = [
-      'client_id', 'client_secret', 'sandbox_mode', 'field_price',
-      'field_description', 'field_sku', 'currency_code', 'tax',
+      'content_types', 'client_id', 'client_secret', 'sandbox_mode', 'field_price',
+      'field_description', 'field_sku', 'currency_code', 'tax', 'allowed_gateways',
     ];
     $ppss_config = $this->config('ppss.settings');
     foreach ($config_keys as $config_key) {
       if ($form_state->hasValue($config_key)) {
 
-        if ($config_key == 'payment_type') {
+        if ($config_key == 'allowed_gateways' || $config_key == 'content_types') {
           $ppss_config->set($config_key, array_filter($form_state->getValue(
             $config_key
           )));

@@ -1,4 +1,4 @@
-ppss.admin:
+ppss.admin_settings_link:
   title: Payments
   description: Configure Platform of Payments API keys, fields names, etc.
   route_name: ppss.admin_settings
