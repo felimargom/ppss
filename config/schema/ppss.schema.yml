@@ -1,17 +1,24 @@
 ppss.settings:
   type: config_object
   label: PPSS Settings
+
   mapping:
+    allowed_gateways:
+      type: sequence
+      label: Payment gateways the PPSS Form can display on it
+      sequence:
+        type: string
+        label: Payment gateway
+    content_types:
+      type: sequence
+      label: Content types the PPSS Form can display on it
+      sequence:
+        type: string
+        label: Content type
     client_id:
       type: string
     client_secret:
       type: string
-    payment_type:
-      type: sequence
-      label: Payment types the PPSS Form can display on
-      sequence:
-        type: string
-        label: Payment type
     sandbox_mode:
       type: boolean
     field_price:
