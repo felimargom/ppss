@@ -9,11 +9,41 @@ namespace Drupal\ppss\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 
 class PPSSFormSettings extends ConfigFormBase
 {
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * Constructs an AutoParagraphForm object.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entityTypeManager.
+   */
+  public function __construct(EntityTypeManagerInterface $entityTypeManager)
+  {
+    $this->entityTypeManager = $entityTypeManager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container)
+  {
+    return new static(
+      $container->get('entity_type.manager')
+    );
+  }
+  
   /**
    * {@inheritdoc}
    */
@@ -38,12 +68,19 @@ class PPSSFormSettings extends ConfigFormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state)
   {
-    $nodeTypes = node_type_get_names();
+    // Get the internal node type machine name.
+    $existingContentTypeOptions = $this->getExistingContentTypes();
     $paymentGateways = ['PayPal' => 'PayPal'];
 
     // The settings needed was configured inside ppss.settings.yml file.
     $config = $this->config('ppss.settings');
-    
+
+    $form['init_message'] = [
+      '#markup' => $this->t('**Before configure this module always execute "composer require
+        paypal/rest-api-sdk-php:*" on command line'),
+    ];
+
+    //dump($existingContentTypeOptions);
     // General settings.
     $form['ppss_settings']['allowed_gateways'] = [
       '#type' => 'checkboxes',
@@ -58,7 +95,8 @@ class PPSSFormSettings extends ConfigFormBase
       '#type' => 'checkboxes',
       '#title' => $this->t('The content types to enable PPSS button for'),
       '#default_value' => $config->get('content_types'),
-      '#options' => $nodeTypes,
+      '#options' => $existingContentTypeOptions,
+      '#empty_option' => $this->t('- Select an existing content type -'),
       '#description' => $this->t('On the specified node types, an PPSS button
         will be available and can be shown to make purchases.'),
       '#required' => true,
@@ -174,7 +212,12 @@ class PPSSFormSettings extends ConfigFormBase
       '#description' => $this->t('Allways use the PayPal sandbox virtual testing
         environment before go to production.'),
     ];
-  
+
+    $form['last_message'] = [
+      '#markup' => $this->t('Remember always flush the cache after save this
+        configuration form.'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -203,5 +246,21 @@ class PPSSFormSettings extends ConfigFormBase
     }
     $this->messenger()->addMessage($this->t('The configuration options have been saved.'));
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Returns a list of all the content types currently installed.
+   *
+   * @return array
+   *   An array of content types.
+   */
+  public function getExistingContentTypes()
+  {
+    $types = [];
+    $contentTypes = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+    foreach ($contentTypes as $contentType) {
+      $types[$contentType->id()] = $contentType->label();
+    }
+    return $types;
   }
 }
