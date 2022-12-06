@@ -38,13 +38,16 @@ class PPSSButtonPayBlock extends BlockBase
   {
     // If viewing a node, get the fully loaded node object.
     $node = \Drupal::routeMatch()->getParameter('node');
-    $allowedNodeTypes = \Drupal::config('ppss.settings')->get('content_types');
 
     if (!(is_null($node))) {
-      //if (strlen($node->gettype() == 'article') {
+      $nodeType = $node->getType();
+      $allowedNodeTypes = \Drupal::config('ppss.settings')->get('content_types');
+      $findedNodeType = array_search($node->getType(), $allowedNodeTypes);
+
+      if ($nodeType == $findedNodeType) {
         return AccessResult::allowedIfHasPermission($account, 'view ppss button');
-      //}
-      
+      }
+
     }
 
     return AccessResult::forbidden();
