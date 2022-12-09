@@ -8,5 +8,6 @@ sandbox_mode: true
 field_price: ''
 field_description: ''
 field_sku: ''
+field_role: ''
 currency_code: 'MXN'
 tax: '16.0 %'

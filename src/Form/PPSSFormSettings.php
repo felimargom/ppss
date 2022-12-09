@@ -80,7 +80,6 @@ class PPSSFormSettings extends ConfigFormBase
         paypal/rest-api-sdk-php:*" on command line'),
     ];
 
-    //dump($existingContentTypeOptions);
     // General settings.
     $form['ppss_settings']['allowed_gateways'] = [
       '#type' => 'checkboxes',
@@ -137,6 +136,14 @@ class PPSSFormSettings extends ConfigFormBase
       '#default_value' => $config->get('field_sku'),
       '#description' => $this->t("What is the internal Drupal system name of the
         field to store product or service SKU. Example: 'field_nvi_sku'."),
+    ];
+
+    $form['ppss_settings']['fields']['field_role'] = [
+      '#title' => $this->t('Role field name'),
+      '#type' => 'textfield',
+      '#default_value' => $config->get('field_role'),
+      '#description' => $this->t("What is the internal Drupal system name of the
+        field that saves the new role assigned to the user after purchase? Example: 'field_nvi_role'."),
     ];
 
     // Start payment details.
@@ -229,6 +236,7 @@ class PPSSFormSettings extends ConfigFormBase
     $config_keys = [
       'content_types', 'client_id', 'client_secret', 'sandbox_mode', 'field_price',
       'field_description', 'field_sku', 'currency_code', 'tax', 'allowed_gateways',
+      'field_role',
     ];
     $ppss_config = $this->config('ppss.settings');
     foreach ($config_keys as $config_key) {
