@@ -74,6 +74,7 @@ class PPSSButtonPay extends FormBase
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
+    $fieldRole = $config->get('field_role');
     $currency = $config->get('currency_code');
     $taxAmount = floatval($config->get('tax'))/100;
 
@@ -82,6 +83,7 @@ class PPSSButtonPay extends FormBase
       $price = floatval($node->get($fieldPrice)->getString());
       $description = $node->get($fieldDescription)->getString();
       $sku = strlen($fieldSku) == 0 ? '' : $node->get($fieldSku)->getString();
+      $newRole = strlen($fieldRole) == 0 ? '' : $node->get($fieldRole)->getString();
       $tax = $price * $taxAmount;
       $total = $price * (1+$taxAmount);
 
@@ -133,7 +135,7 @@ class PPSSButtonPay extends FormBase
       // payment approval/ cancellation.
       $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
       $redirectUrls = new RedirectUrls();
-      $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?sku=".$sku)
+      $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?roleid=".$newRole)
         ->setCancelUrl("$baseUrl/ppss/error");
       
       // A Payment Resource; create one using the above types and intent set to 'sale'

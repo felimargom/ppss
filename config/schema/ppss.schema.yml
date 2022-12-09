@@ -27,6 +27,8 @@ ppss.settings:
       type: string
     field_sku:
       type: string
+    field_role:
+      type: string
     currency_code:
       type: string
     tax:

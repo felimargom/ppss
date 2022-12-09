@@ -23,7 +23,6 @@ use PayPal\Rest\ApiContext;
   */
 class PPSSConfirmSale extends FormBase
 {
-
   /**
    * {@inheritdoc}
    */
@@ -46,6 +45,7 @@ class PPSSConfirmSale extends FormBase
     if ( !(is_null($node)) ) {
       $payment_id = \Drupal::request()->query->get('paymentId');
       $payer_id = \Drupal::request()->query->get('PayerID');
+      $newRole = \Drupal::request()->query->get('roleid');
 
       $apiContext = new ApiContext(
         new OAuthTokenCredential($clientId, $clientSecret)
@@ -85,7 +85,7 @@ class PPSSConfirmSale extends FormBase
           $uid = intval(current($ids));
           try {
             $user = \Drupal\user\Entity\User::load($uid);
-            $user->addRole('nvi_suscriber');
+            $user->addRole($newRole);
             $user->save();
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
@@ -110,7 +110,7 @@ class PPSSConfirmSale extends FormBase
             $user->set('status', 1);
             $user->setEmail($email);
             $user->setUsername($userName);
-            $user->addRole('nvi_suscriber');
+            $user->addRole($newRole);
             $user->save();
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
@@ -140,7 +140,7 @@ class PPSSConfirmSale extends FormBase
         $uid = \Drupal::currentUser()->id();
         try {
           $user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id($uid));
-          $user->addRole('nvi_suscriber');
+          $user->addRole($newRole);
           $user->save();
         } catch (\Exception $e) {
           // Show error message to the user
