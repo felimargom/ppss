@@ -10,16 +10,19 @@ namespace Drupal\ppss\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use PayPal\Api\Payer;
-use PayPal\Api\Amount;
-use PayPal\Api\Details;
-use PayPal\Api\Item;
-use PayPal\Api\ItemList;
-use PayPal\Api\Payment;
-use PayPal\Api\RedirectUrls;
-use PayPal\Api\Transaction;
 use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Rest\ApiContext;
 use PayPal\Exception\PayPalConnectionException;
+use PayPal\Api\Agreement;
+use PayPal\Api\ShippingAddress;
+use PayPal\Api\Plan;
+use PayPal\Api\ChargeModel;
+use PayPal\Api\Currency;
+use PayPal\Api\MerchantPreferences;
+use PayPal\Api\PaymentDefinition;
+use PayPal\Api\Patch;
+use PayPal\Api\PatchRequest;
+use PayPal\Common\PayPalModel;
 
 
 /**
@@ -85,53 +88,40 @@ class PPSSButtonPay extends FormBase
       $tax = $price * $taxAmount;
       $total = $price * (1+$taxAmount);
 
-      // Set payment method. By now always PayPal
-      $payer = new Payer();
-      $payer->setPaymentMethod('paypal');
-
-      // ### Itemized information
-      // (Optional) Lets you specify item wise
-      // information
-      $item = new Item();
-      if (strlen($sku) == 0) {
-        $item->setName($description)
-          ->setCurrency($currency)
-          ->setQuantity(1)
-          ->setPrice($price);
-      } else {
-        $item->setName($description)
-          ->setCurrency($currency)
-          ->setQuantity(1)
-          ->setSku($sku) //  Similar to `item_number` in Classic API
-          ->setPrice($price);
-      }
-
-      $itemList = new ItemList();
-      $itemList->setItems(array($item));
-      
-      // Additional payment details to set payment information such as tax,
-      // shipping charges etc.
-      $details = new Details();
-      $details->setTax($tax)
-        ->setSubtotal($price);
-      
-      // Specify a payment amount and additional details such as shipping, tax.
-      $amount = new Amount();
-      $amount->setCurrency($currency)
-        ->setTotal($total)
-        ->setDetails($details);
-      
-      // A transaction defines the contract of a payment - what is the payment
-      // for and who is fulfilling it.
-      $transaction = new Transaction();
-      $transaction->setAmount($amount)
-        ->setItemList($itemList)
+      // Create a new billing plan
+      $plan = new Plan();
+      $plan->setName('Basico-C')
         ->setDescription($description)
-        ->setInvoiceNumber(uniqid());
+        ->setType('INFINITE');  // Valid parameters are INFINITE or FIXED
+
+      // Set billing plan definitions
+      $paymentDefinition = new PaymentDefinition();
+      $paymentDefinition
+        ->setName('Regular Payments')
+        ->setType('REGULAR')    // Valid values are TRIAL or REGULAR
+        ->setFrequency('MONTH') // Valid values are DAY,WEEK,MONTH or YEAR
+        ->setFrequencyInterval('1')
+        //  If payment definition type is REGULAR, cycles can only be null or 0
+        // for an UNLIMITED plan
+        ->setCycles('0')
+        ->setAmount(new Currency(array(
+          'value' => $price,
+          'currency' => $currency
+          )));
+
+      // Set charge models
+      $chargeModel = new ChargeModel();
+      $chargeModel->setType('TAX')->setAmount(new Currency(array(
+        'value' => $tax,
+        'currency' => $currency
+        )));
+
+      $paymentDefinition->setChargeModels(array($chargeModel));
       
       // Set the urls that the buyer must be redirected to after
       // payment approval/ cancellation.
       $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
+<<<<<<< Updated upstream
       $redirectUrls = new RedirectUrls();
       $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?sku=".$sku)
         ->setCancelUrl("$baseUrl/ppss/error");
@@ -142,10 +132,28 @@ class PPSSButtonPay extends FormBase
         ->setPayer($payer)
         ->setRedirectUrls($redirectUrls)
         ->setTransactions(array($transaction));
+=======
+        
+      // Set merchant preferences
+      $merchantPreferences = new MerchantPreferences();
+      $merchantPreferences->setReturnUrl("$baseUrl/venta/exitosa?roleid=$newRole")
+        ->setCancelUrl($baseUrl)
+        ->setAutoBillAmount('yes')
+        ->setInitialFailAmountAction('CONTINUE')
+        ->setMaxFailAttempts('0')
+        ->setSetupFee(new Currency(array(
+          'value' => $total,
+          'currency' => $currency
+        )));
+        
+      // A Subscription Plan Resource; create one using the above info.
+      $plan->setPaymentDefinitions(array($paymentDefinition));
+      $plan->setMerchantPreferences($merchantPreferences);
+>>>>>>> Stashed changes
 
       $apiContext = new ApiContext(
         new OAuthTokenCredential($clientId, $clientSecret)
-      );
+        );
 
       $apiContext->setConfig(
         array(
@@ -159,33 +167,66 @@ class PPSSButtonPay extends FormBase
           // 'http.headers.PayPal-Partner-Attribution-Id' => '123123123'
           //'log.AdapterFactory' => '\PayPal\Log\DefaultLogFactory'
           // Factory class implementing \PayPal\Log\PayPalLogFactory
-        )
-      );
+        ));
 
-      // Create a payment by calling the 'create' method passing it a valid apiContext.
-      // The return object contains the state and the url to which the buyer
-      // must be redirected to for payment approval.
+      // Create a plan by calling the 'create' method passing it a valid apiContext.
       try {
-        $payment->create($apiContext);
+        $createdPlan = $plan->create($apiContext);
+      } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+        // Save error message details in Drupal log.
+        \Drupal::logger('paypal')->error($ex->getData());
+        die($ex);
+      }
 
-        // Search for payment approved link.
-        foreach ($payment->getLinks() as $link) {
-          if ($link->getRel() == "approval_url") {
-            $redirectUrl = $link->getHref();
-          }
-        }
+      // Create new agreement
+      $startDate = date('c', time() + 3600);
+      $agreement = new Agreement();
+      $agreement->setName($description . t('Agreement'))
+        ->setDescription($description . t('Billing Agreement'))
+        ->setStartDate($startDate);
+    
+      try {
+        $patch = new Patch();
+        $value = new PayPalModel('{"state":"ACTIVE"}');
+        $patch->setOp('replace')
+            ->setPath('/')
+            ->setValue($value);
+        $patchRequest = new PatchRequest();
+        $patchRequest->addPatch($patch);
+        $createdPlan->update($patchRequest, $apiContext);
+        $patchedPlan = Plan::get($createdPlan->getId(), $apiContext);
+      } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+        // Save error message details in Drupal log.
+        \Drupal::logger('paypal')->error($ex->getData());
+        die($ex);
+      }
 
-        header('Location: ' . $redirectUrl);
+      // Set plan id
+      $plan = new Plan();
+      $plan->setId($patchedPlan->getId());
+      $agreement->setPlan($plan);
+
+      // Set payment method. By now always PayPal
+      $payer = new Payer();
+      $payer->setPaymentMethod('paypal');
+      $agreement->setPayer($payer);
+
+      // Create agreement
+      try {
+        $agreement = $agreement->create($apiContext);
+  
+        // Extract approval URL to redirect user
+        $approvalUrl = $agreement->getApprovalLink();
+  
+        header("Location: " . $approvalUrl);
         exit();
-
-      } catch (\PayPal\Exception\PayPalConnectionException $e) {
-        
+      } catch (\PayPal\Exception\PayPalConnectionException $ex) {
         $message = "Unable to charge with PayPal at this time due to validation error.
         Please try again.";
 
         // Show error message to the user and save details in Drupal log.
         \Drupal::messenger()->addError(t($message));
-        \Drupal::logger('paypal')->error($e->getData());
+        \Drupal::logger('paypal')->error($ex->getData());
       }
     }
   }
