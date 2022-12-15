@@ -17,6 +17,7 @@ use PayPal\Api\Payment;
 use PayPal\Api\PaymentExecution;
 use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Rest\ApiContext;
+use PayPal\Api\Agreement;
 
  /**
   * Provides an RSVP Email form.
@@ -46,23 +47,42 @@ class PPSSConfirmSale extends FormBase
     if ( !(is_null($node)) ) {
       $payment_id = \Drupal::request()->query->get('paymentId');
       $payer_id = \Drupal::request()->query->get('PayerID');
+      $token = \Drupal::request()->query->get('token');
 
       $apiContext = new ApiContext(
         new OAuthTokenCredential($clientId, $clientSecret)
       );
 
-      // Create a Payment object to confirm that the credentials do have the payment ID resolved.
-      $objPayment = Payment::get($payment_id, $apiContext);
+      if ( !(is_null($payment_id)) ) {
+        // Create a Payment object to confirm that the credentials do have the payment ID resolved.
+        $objPayment = Payment::get($payment_id, $apiContext);
 
-      // Create the payment run by invoking the class and extract the ID of the payer.
-      $execution = new PaymentExecution();
-      $execution->setPayerId($payer_id);
+        // Create the payment run by invoking the class and extract the ID of the payer.
+        $execution = new PaymentExecution();
+        $execution->setPayerId($payer_id);
 
-      // Validate with the credentials that the payer ID does match.
-      $objPayment->execute($execution, $apiContext);
-    
-      // Retrieve all the information of the sale
-      $retrieveDataSale = $objPayment->toJSON();
+        // Validate with the credentials that the payer ID does match.
+        $objPayment->execute($execution, $apiContext);
+      
+        // Retrieve all the information of the sale
+        $retrieveDataSale = $objPayment->toJSON();
+      } else {
+        $objPayment = Agreement::get($createdAgreement->getId(), $apiContext);
+        $objAgreement = new \PayPal\Api\Agreement();
+        try {
+          // Execute agreement
+          $objAgreement->execute($token, $apiContext);
+        } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+          echo $ex->getData();
+          die($ex);
+        }
+      }
+
+      
+      
+
+
+
       
       $datosUsuario = json_decode($retrieveDataSale);
       $email = $datosUsuario->payer->payer_info->email;

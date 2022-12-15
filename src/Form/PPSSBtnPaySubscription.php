@@ -23,9 +23,8 @@ use PayPal\Api\Patch;
 use PayPal\Api\PatchRequest;
 use PayPal\Common\PayPalModel;
 
-
 /**
-* Provides an PPSS testing form.
+* Provides an PPSS only one button form.
 */
 class PPSSBtnPaySubscription extends FormBase
 {
@@ -34,7 +33,7 @@ class PPSSBtnPaySubscription extends FormBase
    */
   public function getFormId()
   {
-    return 'ppss_button_pay';
+    return 'ppssbutton_paysubscription';
   }
 
   /**
@@ -48,11 +47,12 @@ class PPSSBtnPaySubscription extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
 
+    // Only shows form if credentials are correctly configured and content is a node.
     if (!(empty($clientId) || empty($clientSecret) || (is_null($node)))) {
       // Creates the button for pay.
       $form['submit'] = [
         '#type' => 'submit',
-        '#value' => t('Buy Subscription'),
+        '#value' => t('Buy Subscription Now'),
       ];
     } else {
       // Nothing to display.
@@ -76,6 +76,7 @@ class PPSSBtnPaySubscription extends FormBase
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
+    $fieldRole = $config->get('field_role');
     $currency = $config->get('currency_code');
     $taxAmount = floatval($config->get('tax'))/100;
 
@@ -84,6 +85,7 @@ class PPSSBtnPaySubscription extends FormBase
       $price = floatval($node->get($fieldPrice)->getString());
       $description = $node->get($fieldDescription)->getString();
       $sku = strlen($fieldSku) == 0 ? '' : $node->get($fieldSku)->getString();
+      $newRole = strlen($fieldRole) == 0 ? '' : $node->get($fieldRole)->getString();
       $tax = $price * $taxAmount;
       $total = $price * (1+$taxAmount);
 
