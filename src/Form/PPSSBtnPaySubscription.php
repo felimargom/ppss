@@ -14,7 +14,6 @@ use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Rest\ApiContext;
 use PayPal\Exception\PayPalConnectionException;
 use PayPal\Api\Agreement;
-use PayPal\Api\ShippingAddress;
 use PayPal\Api\Plan;
 use PayPal\Api\ChargeModel;
 use PayPal\Api\Currency;
@@ -28,7 +27,7 @@ use PayPal\Common\PayPalModel;
 /**
 * Provides an PPSS testing form.
 */
-class PPSSButtonPay extends FormBase
+class PPSSBtnPaySubscription extends FormBase
 {
   /**
    * {@inheritdoc}
@@ -121,18 +120,6 @@ class PPSSButtonPay extends FormBase
       // Set the urls that the buyer must be redirected to after
       // payment approval/ cancellation.
       $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
-<<<<<<< Updated upstream
-      $redirectUrls = new RedirectUrls();
-      $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?sku=".$sku)
-        ->setCancelUrl("$baseUrl/ppss/error");
-      
-      // A Payment Resource; create one using the above types and intent set to 'sale'
-      $payment = new Payment();
-      $payment->setIntent("sale")
-        ->setPayer($payer)
-        ->setRedirectUrls($redirectUrls)
-        ->setTransactions(array($transaction));
-=======
         
       // Set merchant preferences
       $merchantPreferences = new MerchantPreferences();
@@ -149,7 +136,6 @@ class PPSSButtonPay extends FormBase
       // A Subscription Plan Resource; create one using the above info.
       $plan->setPaymentDefinitions(array($paymentDefinition));
       $plan->setMerchantPreferences($merchantPreferences);
->>>>>>> Stashed changes
 
       $apiContext = new ApiContext(
         new OAuthTokenCredential($clientId, $clientSecret)
