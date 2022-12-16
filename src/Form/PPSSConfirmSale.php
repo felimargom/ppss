@@ -44,16 +44,17 @@ class PPSSConfirmSale extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
     
-    if ( !(is_null($node)) ) {
+    $apiContext = new ApiContext(
+      new OAuthTokenCredential($clientId, $clientSecret)
+    );
+
+    if (!(is_null($node))) {
       $payment_id = \Drupal::request()->query->get('paymentId');
       $payer_id = \Drupal::request()->query->get('PayerID');
+      $newRole = \Drupal::request()->query->get('roleid');
       $token = \Drupal::request()->query->get('token');
 
-      $apiContext = new ApiContext(
-        new OAuthTokenCredential($clientId, $clientSecret)
-      );
-
-      if ( !(is_null($payment_id)) ) {
+      if (!(is_null($payment_id))) {
         // Create a Payment object to confirm that the credentials do have the payment ID resolved.
         $objPayment = Payment::get($payment_id, $apiContext);
 
@@ -64,26 +65,24 @@ class PPSSConfirmSale extends FormBase
         // Validate with the credentials that the payer ID does match.
         $objPayment->execute($execution, $apiContext);
       
-        // Retrieve all the information of the sale
-        $retrieveDataSale = $objPayment->toJSON();
       } else {
-        $objPayment = Agreement::get($createdAgreement->getId(), $apiContext);
-        $objAgreement = new \PayPal\Api\Agreement();
+        //
+        $objAgreement = new Agreement();
+        
         try {
           // Execute agreement
           $objAgreement->execute($token, $apiContext);
+          $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
+
         } catch (\PayPal\Exception\PayPalConnectionException $ex) {
-          echo $ex->getData();
-          die($ex);
+          dump($ex->getData());
+          // die($ex);
         }
       }
-
       
-      
+      // Retrieve all the information of the sale
+      $retrieveDataSale = $objPayment->toJSON();
 
-
-
-      
       $datosUsuario = json_decode($retrieveDataSale);
       $email = $datosUsuario->payer->payer_info->email;
       $paymentPlatform = $datosUsuario->payer->payment_method;
@@ -105,7 +104,7 @@ class PPSSConfirmSale extends FormBase
           $uid = intval(current($ids));
           try {
             $user = \Drupal\user\Entity\User::load($uid);
-            $user->addRole('nvi_suscriber');
+            $user->addRole($newRole);
             $user->save();
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
@@ -130,7 +129,7 @@ class PPSSConfirmSale extends FormBase
             $user->set('status', 1);
             $user->setEmail($email);
             $user->setUsername($userName);
-            $user->addRole('nvi_suscriber');
+            $user->addRole($newRole);
             $user->save();
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
@@ -160,7 +159,7 @@ class PPSSConfirmSale extends FormBase
         $uid = \Drupal::currentUser()->id();
         try {
           $user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id($uid));
-          $user->addRole('nvi_suscriber');
+          $user->addRole($newRole);
           $user->save();
         } catch (\Exception $e) {
           // Show error message to the user
