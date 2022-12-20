@@ -17,6 +17,7 @@ use PayPal\Api\Payment;
 use PayPal\Api\PaymentExecution;
 use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Rest\ApiContext;
+use PayPal\Api\Agreement;
 
  /**
   * Provides an RSVP Email form.
@@ -42,31 +43,54 @@ class PPSSConfirmSale extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
     
-    if ( !(is_null($node)) ) {
+    $apiContext = new ApiContext(
+      new OAuthTokenCredential($clientId, $clientSecret)
+    );
+
+    if (!(is_null($node))) {
       $payment_id = \Drupal::request()->query->get('paymentId');
       $payer_id = \Drupal::request()->query->get('PayerID');
       $newRole = \Drupal::request()->query->get('roleid');
+      $token = \Drupal::request()->query->get('token');
 
-      $apiContext = new ApiContext(
-        new OAuthTokenCredential($clientId, $clientSecret)
-      );
+      if (!(is_null($payment_id))) {
+        // Create a Payment object to confirm that the credentials do have the payment ID resolved.
+        $objPayment = Payment::get($payment_id, $apiContext);
 
-      // Create a Payment object to confirm that the credentials do have the payment ID resolved.
-      $objPayment = Payment::get($payment_id, $apiContext);
+        // Create the payment run by invoking the class and extract the ID of the payer.
+        $execution = new PaymentExecution();
+        $execution->setPayerId($payer_id);
 
-      // Create the payment run by invoking the class and extract the ID of the payer.
-      $execution = new PaymentExecution();
-      $execution->setPayerId($payer_id);
+        // Validate with the credentials that the payer ID does match.
+        $objPayment->execute($execution, $apiContext);
+      
+      } else {
+        // It's recurring payment. A new agreement between the user and PayPal it's required.
+        $objAgreement = new Agreement();
+        
+        try {
+          // Execute agreement
+          $objAgreement->execute($token, $apiContext);
+          $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
 
-      // Validate with the credentials that the payer ID does match.
-      $objPayment->execute($execution, $apiContext);
-    
+        } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+          dump($ex->getData());
+        }
+      }
+     
       // Retrieve all the information of the sale
       $retrieveDataSale = $objPayment->toJSON();
-      
+
       $datosUsuario = json_decode($retrieveDataSale);
       $email = $datosUsuario->payer->payer_info->email;
       $paymentPlatform = $datosUsuario->payer->payment_method;
+
+      // It's recurring payment.
+      if (is_null($payment_id)) {
+        $plan = $datosUsuario->plan->payment_definitions;
+        $frequency = $plan[0]->frequency;
+        $interval = intval($plan[0]->frequency_interval);
+      }
 
       $isAnonymous = \Drupal::currentUser()->isAnonymous();
 
@@ -111,29 +135,50 @@ class PPSSConfirmSale extends FormBase
             $user->setEmail($email);
             $user->setUsername($userName);
             $user->addRole($newRole);
+            $user->enforceIsNew();
+            $user->log;
             $user->save();
+
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
               to create your account. Please contact with the site administrator
               and explain this situation.');
               // Show error message to the user
-              \Drupal::messenger()->addError($errorInfo);
-              \Drupal::logger('Sales')->error($errorInfo);
-              \Drupal::logger('PPSS')->error($e->getMessage());
-            }
+            \Drupal::messenger()->addError($errorInfo);
+            \Drupal::logger('Sales')->error($errorInfo);
+            \Drupal::logger('PPSS')->error($e->getMessage());
+          }
 
-          $form['description'] = [
-            '#markup' => $this->t("Please review your email: $email to login details
-              and begin use our services."),
-          ];
+          // Send confirmation email.
+          $result = array();
+          $result = _user_mail_notify('register_no_approval_required', $user);
 
-          // Get the uid of the new user.
-          $ids = \Drupal::entityQuery('user')
-            ->condition('mail', $email)
-            ->execute();
-          
-          $uid = intval(current($ids));
+          if (!(is_null($result)) && $result == true) {
+
+            $message = t('There was a problem sending your email notification to @email.',
+              array('@email' => $email));
+            \Drupal::messenger()->addError($message);
+            \Drupal::logger('PPSS')->error($message);
+            $form['description'] = ['#markup' => $message,];
+
+          } else {
+
+            $form['description'] = [
+              '#markup' => $this->t("Please review your email: $email to login details
+                and begin use our services."),
+            ];
+
+          }
+        
         }
+
+        // Get the uid of the new user.
+        $ids = \Drupal::entityQuery('user')
+          ->condition('mail', $email)
+          ->execute();
+          
+        $uid = intval(current($ids));
+
       } else {
         // Only will assign the role of the subscription
         // plan purchased to the current user
@@ -171,8 +216,11 @@ class PPSSConfirmSale extends FormBase
         // Specify the fields taht the query will insert to.
         $query->fields([
           'uid',
+          'status',
           'mail',
           'platform',
+          'frequency',
+          'frequency_interval',
           'details',
           'created',
         ]);
@@ -182,8 +230,11 @@ class PPSSConfirmSale extends FormBase
         // in the $query->fields([...]) above.
         $query->values([
           $uid,
+          1,
           $email,
           $paymentPlatform,
+          $frequency,
+          $interval,
           $retrieveDataSale,
           $currentTime,
         ]);

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * A form to sale subscriptions using node details.
+ * A form to sale single products/services using node details.
  */
 
 namespace Drupal\ppss\Form;
@@ -10,6 +10,9 @@ namespace Drupal\ppss\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use PayPal\Api\Payer;
+use PayPal\Auth\OAuthTokenCredential;
+use PayPal\Rest\ApiContext;
+use PayPal\Exception\PayPalConnectionException;
 use PayPal\Api\Amount;
 use PayPal\Api\Details;
 use PayPal\Api\Item;
@@ -17,22 +20,19 @@ use PayPal\Api\ItemList;
 use PayPal\Api\Payment;
 use PayPal\Api\RedirectUrls;
 use PayPal\Api\Transaction;
-use PayPal\Auth\OAuthTokenCredential;
-use PayPal\Rest\ApiContext;
-use PayPal\Exception\PayPalConnectionException;
 
 
 /**
-* Provides an PPSS testing form.
+* Provides an PPSS only one button form.
 */
-class PPSSButtonPay extends FormBase
+class PPSSBtnPayProduct extends FormBase
 {
   /**
    * {@inheritdoc}
    */
   public function getFormId()
   {
-    return 'ppss_button_pay';
+    return 'ppssbutton_payproduct';
   }
 
   /**
@@ -46,11 +46,12 @@ class PPSSButtonPay extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
 
+    // Only shows form if credentials are correctly configured and content is a node.
     if (!(empty($clientId) || empty($clientSecret) || (is_null($node)))) {
       // Creates the button for pay.
       $form['submit'] = [
         '#type' => 'submit',
-        '#value' => t('Buy Subscription'),
+        '#value' => t('Buy Product Now'),
       ];
     } else {
       // Nothing to display.
@@ -71,10 +72,14 @@ class PPSSButtonPay extends FormBase
     $config = \Drupal::config('ppss.settings');
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
+    $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'DEBUG' : 'INFO';
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
     $fieldRole = $config->get('field_role');
+    $successUrl = $config->get('success_url');
+    $errorUrl = $config->get('error_url');
     $currency = $config->get('currency_code');
     $taxAmount = floatval($config->get('tax'))/100;
 
@@ -135,8 +140,8 @@ class PPSSButtonPay extends FormBase
       // payment approval/ cancellation.
       $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
       $redirectUrls = new RedirectUrls();
-      $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?roleid=".$newRole)
-        ->setCancelUrl("$baseUrl/ppss/error");
+      $redirectUrls->setReturnUrl("$baseUrl$successUrl?roleid=".$newRole)
+        ->setCancelUrl($baseUrl.$errorUrl);
       
       // A Payment Resource; create one using the above types and intent set to 'sale'
       $payment = new Payment();
@@ -151,10 +156,10 @@ class PPSSButtonPay extends FormBase
 
       $apiContext->setConfig(
         array(
-          'mode' => 'sandbox',
+          'mode' => $sandbox,
           'log.LogEnabled' => true,
           'log.FileName' => '../PayPal.log',
-          'log.LogLevel' => 'DEBUG', // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
+          'log.LogLevel' => $logLevel, // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
           'cache.enabled' => true,
           //'cache.FileName' => '/PaypalCache' // for determining paypal cache directory
           'http.CURLOPT_CONNECTTIMEOUT' => 30
