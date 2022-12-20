@@ -204,14 +204,6 @@ class PPSSFormSettings extends ConfigFormBase
         field to store product or service SKU. Example: 'field_nvi_sku'."),
     ];
 
-    $form['ppss_settings']['fields']['field_role'] = [
-      '#title' => $this->t('Role field name'),
-      '#type' => 'textfield',
-      '#default_value' => $config->get('field_role'),
-      '#description' => $this->t("What is the internal Drupal system name of the
-        field that saves the new role assigned to the user after purchase? Example: 'field_nvi_role'."),
-    ];
-
     // Start payment details.
     $form['details'] = [
       '#type' => 'details',
