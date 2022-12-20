@@ -24,7 +24,6 @@ use PayPal\Api\Agreement;
   */
 class PPSSConfirmSale extends FormBase
 {
-
   /**
    * {@inheritdoc}
    */
