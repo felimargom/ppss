@@ -72,10 +72,14 @@ class PPSSBtnPayProduct extends FormBase
     $config = \Drupal::config('ppss.settings');
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
+    $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'DEBUG' : 'INFO';
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
     $fieldRole = $config->get('field_role');
+    $successUrl = $config->get('success_url');
+    $errorUrl = $config->get('error_url');
     $currency = $config->get('currency_code');
     $taxAmount = floatval($config->get('tax'))/100;
 
@@ -136,8 +140,8 @@ class PPSSBtnPayProduct extends FormBase
       // payment approval/ cancellation.
       $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
       $redirectUrls = new RedirectUrls();
-      $redirectUrls->setReturnUrl("$baseUrl/venta/exitosa?roleid=".$newRole)
-        ->setCancelUrl("$baseUrl/ppss/error");
+      $redirectUrls->setReturnUrl("$baseUrl$successUrl?roleid=".$newRole)
+        ->setCancelUrl($baseUrl.$errorUrl);
       
       // A Payment Resource; create one using the above types and intent set to 'sale'
       $payment = new Payment();
@@ -152,10 +156,10 @@ class PPSSBtnPayProduct extends FormBase
 
       $apiContext->setConfig(
         array(
-          'mode' => 'sandbox',
+          'mode' => $sandbox,
           'log.LogEnabled' => true,
           'log.FileName' => '../PayPal.log',
-          'log.LogLevel' => 'DEBUG', // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
+          'log.LogLevel' => $logLevel, // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
           'cache.enabled' => true,
           //'cache.FileName' => '/PaypalCache' // for determining paypal cache directory
           'http.CURLOPT_CONNECTTIMEOUT' => 30

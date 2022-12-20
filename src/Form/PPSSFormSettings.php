@@ -10,9 +10,11 @@ namespace Drupal\ppss\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Path\PathValidatorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+
 
 class PPSSFormSettings extends ConfigFormBase
 {
@@ -24,14 +26,24 @@ class PPSSFormSettings extends ConfigFormBase
   protected $entityFieldManager;
 
   /**
+   * The path validator.
+   *
+   * @var \Drupal\Core\Path\PathValidatorInterface
+   */
+  protected $pathValidator;
+
+  /**
    * Constructs an AutoParagraphForm object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entityTypeManager.
+   * @param \Drupal\Core\Path\PathValidatorInterface $path_validator
+   *   The path validator.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager)
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, PathValidatorInterface $path_validator)
   {
     $this->entityTypeManager = $entityTypeManager;
+    $this->pathValidator = $path_validator;
   }
 
   /**
@@ -40,7 +52,8 @@ class PPSSFormSettings extends ConfigFormBase
   public static function create(ContainerInterface $container)
   {
     return new static(
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('path.validator'),
     );
   }
   
@@ -80,9 +93,8 @@ class PPSSFormSettings extends ConfigFormBase
         paypal/rest-api-sdk-php:*" on command line'),
     ];
 
-    //dump($existingContentTypeOptions);
     // General settings.
-    $form['ppss_settings']['allowed_gateways'] = [
+    $form['allowed_gateways'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Subscriptions can be pay with all selected payments gateways.'),
       '#options' => $paymentGateways,
@@ -91,7 +103,7 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['content_types'] = [
+    $form['content_types'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('The content types to enable PPSS button for'),
       '#default_value' => $config->get('content_types'),
@@ -102,18 +114,44 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
     
-    // Start fields configuration.
-    $form['ppss_settings']['fields'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Fields names settings'),
+    $form['return_url'] = [
+      '#type' => 'details',
+      '#title' => $this->t('URL of return pages'),
+      '#open' => TRUE,
     ];
 
-    $form['ppss_settings']['fields']['description'] = [
+    $form['return_url']['success_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Success URL'),
+      '#default_value' => $config->get('success_url'),
+      '#description' => $this->t('What is the return URL when a new successful sale was made? Specify a relative URL.'),
+      '#size' => 40,
+      '#required' => true,
+    ];
+
+    $form['return_url']['error_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Error URL'),
+      '#default_value' => $config->get('error_url'),
+      '#description' => $this->t('What is the return URL when a sale fails? Specify a relative URL.
+        Leave blank to display the default front page.'),
+      '#size' => 40,
+      '#required' => true,
+    ];
+
+    // Start fields configuration.
+    $form['fields'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Fields names settings'),
+      '#open' => FALSE,
+    ];
+
+    $form['fields']['description'] = [
       '#markup' => $this->t('You always need to add one field of this type in your
         custom node type.'),
     ];
 
-    $form['ppss_settings']['fields']['field_price'] = [
+    $form['fields']['field_price'] = [
       '#title' => $this->t('Price field name'),
       '#type' => 'textfield',
       '#default_value' => $config->get('field_price'),
@@ -122,7 +160,26 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['fields']['field_description'] = [
+    $form['fields']['field_frequency'] = [
+      '#title' => $this->t('Frecuency field name'),
+      '#type' => 'textfield',
+      '#default_value' => $config->get('field_frequency'),
+      '#description' => $this->t("What is the internal Drupal system name of the
+        field to store frequency in a recurring subscription agreement.
+        Example: 'field_nvi_frecuency'."),
+      '#required' => true,
+    ];
+
+    $form['fields']['field_frequency_interval'] = [
+      '#title' => $this->t('Frequency interval field name'),
+      '#type' => 'textfield',
+      '#default_value' => $config->get('field_frequency_interval'),
+      '#description' => $this->t("What is the internal Drupal system name of the
+        field to save interval between charges. Example: 'field_frequency_interval'."),
+      '#required' => true,
+    ];
+
+    $form['fields']['field_description'] = [
       '#title' => $this->t('Description field name'),
       '#type' => 'textfield',
       '#default_value' => $config->get('field_description'),
@@ -131,7 +188,15 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['fields']['field_sku'] = [
+    $form['fields']['field_role'] = [
+      '#title' => $this->t('User role field name'),
+      '#type' => 'textfield',
+      '#default_value' => $config->get('field_role'),
+      '#description' => $this->t("What is the internal Drupal system name of the
+        field to store new user role assigned after purchased a plan. Example: 'field_nvi_role'."),
+    ];
+
+    $form['fields']['field_sku'] = [
       '#title' => $this->t('SKU field name'),
       '#type' => 'textfield',
       '#default_value' => $config->get('field_sku'),
@@ -140,12 +205,13 @@ class PPSSFormSettings extends ConfigFormBase
     ];
 
     // Start payment details.
-    $form['ppss_settings']['details'] = [
-      '#type' => 'fieldset',
+    $form['details'] = [
+      '#type' => 'details',
       '#title' => $this->t('Payment configuration details'),
+      '#open' => FALSE,
     ];
 
-    $form['ppss_settings']['details']['currency_code'] = [
+    $form['details']['currency_code'] = [
       '#title' => $this->t('Currency'),
       '#type' => 'textfield',
       '#default_value' => $config->get('currency_code'),
@@ -160,7 +226,7 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['details']['tax'] = [
+    $form['details']['tax'] = [
       '#title' => $this->t('Tax'),
       '#type' => 'textfield',
       '#default_value' => $config->get('tax'),
@@ -168,13 +234,14 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
     
-    // Start PalPal general settings.
-    $form['ppss_settings']['paypal_settings'] = [
-      '#type' => 'fieldset',
+    // Start PayPal general settings.
+    $form['paypal_settings'] = [
+      '#type' => 'details',
       '#title' => $this->t('PayPal Settings'),
+      '#open' => FALSE,
     ];
 
-    $form['ppss_settings']['paypal_settings']['description'] = [
+    $form['paypal_settings']['description'] = [
       '#markup' => $this->t('Please refer to @link for your settings.', [
         '@link' => Link::fromTextAndUrl($this->t('PayPal developer'),
           Url::fromUri('https://developer.paypal.com/developer/applications/', [
@@ -185,7 +252,7 @@ class PPSSFormSettings extends ConfigFormBase
       ]),
     ];
 
-    $form['ppss_settings']['paypal_settings']['client_id'] = [
+    $form['paypal_settings']['client_id'] = [
       '#type' => 'textfield',
       '#title' => t('PayPal Client ID'),
       '#size' => 100,
@@ -195,7 +262,7 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['paypal_settings']['client_secret'] = [
+    $form['paypal_settings']['client_secret'] = [
       '#type' => 'textfield',
       '#title' => t('PayPal Client Secret'),
       '#size' => 100,
@@ -205,7 +272,7 @@ class PPSSFormSettings extends ConfigFormBase
       '#required' => true,
     ];
 
-    $form['ppss_settings']['paypal_settings']['sandbox_mode'] = [
+    $form['paypal_settings']['sandbox_mode'] = [
       '#title' => $this->t('Enable SandBox Mode'),
       '#type' => 'checkbox',
       '#default_value' => $config->get('sandbox_mode'),
@@ -220,6 +287,23 @@ class PPSSFormSettings extends ConfigFormBase
 
     return parent::buildForm($form, $form_state);
   }
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Validate return URL pages path.
+    //dump(($form_state->getValue('success_url')))
+    if (!$this->pathValidator->isValid($form_state->getValue('success_url'))) {
+      $form_state->setErrorByName('success_url', $this->t("Either the path '%path' is invalid or
+        you do not have access to it.", ['%path' => $form_state->getValue('success_url')]));
+    }
+    if (!$this->pathValidator->isValid($form_state->getValue('error_url'))) {
+      $form_state->setErrorByName('error_url', $this->t("Either the path '%path' is invalid or
+        you do not have access to it.", ['%path' => $form_state->getValue('error_url')]));
+    }
+    parent::validateForm($form, $form_state);
+
+  }
 
   /**
    * {@inheritdoc}
@@ -228,7 +312,8 @@ class PPSSFormSettings extends ConfigFormBase
   {
     $config_keys = [
       'content_types', 'client_id', 'client_secret', 'sandbox_mode', 'field_price',
-      'field_description', 'field_sku', 'currency_code', 'tax', 'allowed_gateways',
+      'field_description', 'field_role', 'field_sku', 'currency_code', 'allowed_gateways',
+      'field_frequency', 'field_frequency_interval', 'success_url', 'error_url', 'tax',
     ];
     $ppss_config = $this->config('ppss.settings');
     foreach ($config_keys as $config_key) {

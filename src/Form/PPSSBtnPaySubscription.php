@@ -73,25 +73,34 @@ class PPSSBtnPaySubscription extends FormBase
     $config = \Drupal::config('ppss.settings');
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
+    $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'DEBUG' : 'INFO';
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
     $fieldRole = $config->get('field_role');
+    $fieldFrequency = $config->get('field_frequency');
+    $fieldFrequencyInterval = strval($config->get('field_frequency_interval'));
+    $successUrl = $config->get('success_url');
+    $errorUrl = $config->get('error_url');
     $currency = $config->get('currency_code');
     $taxAmount = floatval($config->get('tax'))/100;
 
     if (!(empty($clientId)) || !(empty($clientSecret)) || !(is_null($node))) {
 
-      $price = floatval($node->get($fieldPrice)->getString());
+      $name = $node->get('title')->getString();
       $description = $node->get($fieldDescription)->getString();
+      $price = floatval($node->get($fieldPrice)->getString());
       $sku = strlen($fieldSku) == 0 ? '' : $node->get($fieldSku)->getString();
+      $description = (strlen($sku) > 0) ? "SKU: $sku - $description" : $description;
       $newRole = strlen($fieldRole) == 0 ? '' : $node->get($fieldRole)->getString();
       $tax = $price * $taxAmount;
-      $total = $price * (1+$taxAmount);
+      $frequency = $node->get($fieldFrequency)->getString();
+      $interval = strval($node->get($fieldFrequencyInterval)->getString());
 
       // Create a new billing plan
       $plan = new Plan();
-      $plan->setName('Basico-C')
+      $plan->setName($name)
         ->setDescription($description)
         ->setType('INFINITE');  // Valid parameters are INFINITE or FIXED
 
@@ -100,8 +109,8 @@ class PPSSBtnPaySubscription extends FormBase
       $paymentDefinition
         ->setName('Regular Payments')
         ->setType('REGULAR')    // Valid values are TRIAL or REGULAR
-        ->setFrequency('MONTH') // Valid values are DAY,WEEK,MONTH or YEAR
-        ->setFrequencyInterval('1')
+        ->setFrequency($frequency) // Valid values are DAY,WEEK,MONTH or YEAR
+        ->setFrequencyInterval($interval)
         //  If payment definition type is REGULAR, cycles can only be null or 0
         // for an UNLIMITED plan
         ->setCycles('0')
@@ -115,7 +124,7 @@ class PPSSBtnPaySubscription extends FormBase
       $chargeModel->setType('TAX')->setAmount(new Currency(array(
         'value' => $tax,
         'currency' => $currency
-        )));
+      )));
 
       $paymentDefinition->setChargeModels(array($chargeModel));
       
@@ -125,15 +134,15 @@ class PPSSBtnPaySubscription extends FormBase
         
       // Set merchant preferences
       $merchantPreferences = new MerchantPreferences();
-      $merchantPreferences->setReturnUrl("$baseUrl/venta/exitosa?roleid=$newRole")
-        ->setCancelUrl($baseUrl)
+      $merchantPreferences->setReturnUrl("$baseUrl$successUrl?roleid=$newRole")
+        ->setCancelUrl($baseUrl.$errorUrl)
         ->setAutoBillAmount('yes')
         ->setInitialFailAmountAction('CONTINUE')
-        ->setMaxFailAttempts('0')
-        ->setSetupFee(new Currency(array(
-          'value' => $total,
-          'currency' => $currency
-        )));
+        ->setMaxFailAttempts('0');
+        //->setSetupFee(new Currency(array(
+        //  'value' => $total,
+        //  'currency' => $currency
+        //)));
         
       // A Subscription Plan Resource; create one using the above info.
       $plan->setPaymentDefinitions(array($paymentDefinition));
@@ -145,10 +154,10 @@ class PPSSBtnPaySubscription extends FormBase
 
       $apiContext->setConfig(
         array(
-          'mode' => 'sandbox',
+          'mode' => $sandbox,
           'log.LogEnabled' => true,
           'log.FileName' => '../PayPal.log',
-          'log.LogLevel' => 'DEBUG', // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
+          'log.LogLevel' => $logLevel, // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
           'cache.enabled' => true,
           //'cache.FileName' => '/PaypalCache' // for determining paypal cache directory
           'http.CURLOPT_CONNECTTIMEOUT' => 30
@@ -169,8 +178,8 @@ class PPSSBtnPaySubscription extends FormBase
       // Create new agreement
       $startDate = date('c', time() + 3600);
       $agreement = new Agreement();
-      $agreement->setName($description . t('Agreement'))
-        ->setDescription($description . t('Billing Agreement'))
+      $agreement->setName($name . ' - ' . t('Agreement.'))
+        ->setDescription($description)
         ->setStartDate($startDate);
     
       try {

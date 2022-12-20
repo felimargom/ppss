@@ -66,7 +66,7 @@ class PPSSConfirmSale extends FormBase
         $objPayment->execute($execution, $apiContext);
       
       } else {
-        //
+        // It's recurring payment. A new agreement between the user and PayPal it's required.
         $objAgreement = new Agreement();
         
         try {
@@ -76,16 +76,22 @@ class PPSSConfirmSale extends FormBase
 
         } catch (\PayPal\Exception\PayPalConnectionException $ex) {
           dump($ex->getData());
-          // die($ex);
         }
       }
-      
+     
       // Retrieve all the information of the sale
       $retrieveDataSale = $objPayment->toJSON();
 
       $datosUsuario = json_decode($retrieveDataSale);
       $email = $datosUsuario->payer->payer_info->email;
       $paymentPlatform = $datosUsuario->payer->payment_method;
+
+      // It's recurring payment.
+      if (is_null($payment_id)) {
+        $plan = $datosUsuario->plan->payment_definitions;
+        $frequency = $plan[0]->frequency;
+        $interval = intval($plan[0]->frequency_interval);
+      }
 
       $isAnonymous = \Drupal::currentUser()->isAnonymous();
 
@@ -130,29 +136,50 @@ class PPSSConfirmSale extends FormBase
             $user->setEmail($email);
             $user->setUsername($userName);
             $user->addRole($newRole);
+            $user->enforceIsNew();
+            $user->log;
             $user->save();
+
           } catch (\Exception $e) {
             $errorInfo = t('Charge was made correctly but something was wrong when trying
               to create your account. Please contact with the site administrator
               and explain this situation.');
               // Show error message to the user
-              \Drupal::messenger()->addError($errorInfo);
-              \Drupal::logger('Sales')->error($errorInfo);
-              \Drupal::logger('PPSS')->error($e->getMessage());
-            }
+            \Drupal::messenger()->addError($errorInfo);
+            \Drupal::logger('Sales')->error($errorInfo);
+            \Drupal::logger('PPSS')->error($e->getMessage());
+          }
 
-          $form['description'] = [
-            '#markup' => $this->t("Please review your email: $email to login details
-              and begin use our services."),
-          ];
+          // Send confirmation email.
+          $result = array();
+          $result = _user_mail_notify('register_no_approval_required', $user);
 
-          // Get the uid of the new user.
-          $ids = \Drupal::entityQuery('user')
-            ->condition('mail', $email)
-            ->execute();
-          
-          $uid = intval(current($ids));
+          if (!(is_null($result)) && $result == true) {
+
+            $message = t('There was a problem sending your email notification to @email.',
+              array('@email' => $email));
+            \Drupal::messenger()->addError($message);
+            \Drupal::logger('PPSS')->error($message);
+            $form['description'] = ['#markup' => $message,];
+
+          } else {
+
+            $form['description'] = [
+              '#markup' => $this->t("Please review your email: $email to login details
+                and begin use our services."),
+            ];
+
+          }
+        
         }
+
+        // Get the uid of the new user.
+        $ids = \Drupal::entityQuery('user')
+          ->condition('mail', $email)
+          ->execute();
+          
+        $uid = intval(current($ids));
+
       } else {
         // Only will assign the role of the subscription
         // plan purchased to the current user
@@ -190,8 +217,11 @@ class PPSSConfirmSale extends FormBase
         // Specify the fields taht the query will insert to.
         $query->fields([
           'uid',
+          'status',
           'mail',
           'platform',
+          'frequency',
+          'frequency_interval',
           'details',
           'created',
         ]);
@@ -201,8 +231,11 @@ class PPSSConfirmSale extends FormBase
         // in the $query->fields([...]) above.
         $query->values([
           $uid,
+          1,
           $email,
           $paymentPlatform,
+          $frequency,
+          $interval,
           $retrieveDataSale,
           $currentTime,
         ]);

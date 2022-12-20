@@ -23,11 +23,21 @@ ppss.settings:
       type: boolean
     field_price:
       type: string
+    field_frequency:
+      type: string
+    field_frequency_interval:
+      type: string
     field_description:
       type: string
     field_sku:
       type: string
+    field_role:
+      type: string
     currency_code:
       type: string
     tax:
+      type: string
+    success_url:
+      type: string
+    error_url:
       type: string
