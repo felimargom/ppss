@@ -156,10 +156,10 @@ class PPSSBtnPaySubscription extends FormBase
         array(
           'mode' => $sandbox,
           'log.LogEnabled' => true,
-          'log.FileName' => '../PayPal.log',
+          'log.FileName' => '../paypal/PayPal.log',
           'log.LogLevel' => $logLevel, // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
           'cache.enabled' => true,
-          //'cache.FileName' => '/PaypalCache' // for determining paypal cache directory
+          'cache.FileName' => '/PaypalCache', // for determining paypal cache directory
           'http.CURLOPT_CONNECTTIMEOUT' => 30
           // 'http.headers.PayPal-Partner-Attribution-Id' => '123123123'
           //'log.AdapterFactory' => '\PayPal\Log\DefaultLogFactory'
