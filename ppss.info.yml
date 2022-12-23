@@ -2,7 +2,7 @@ name: Platform of Payments and Sales Simple
 type: module
 core_version_requirement: ^9
 description: Allows users pay services purchases with payment gateways in a simple and affordable manner.
-package: COATI Sales
+package: Custom
 
 dependencies:
   - drupal:block

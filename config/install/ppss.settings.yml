@@ -1,10 +1,17 @@
-payment_type:
+content_types:
+  - article
+allowed_gateways:
   - PayPal
 client_id: ''
 client_secret: ''
 sandbox_mode: true
 field_price: ''
+field_frequency: ''
+field_frequency_interval: ''
 field_description: ''
 field_sku: ''
+field_role: ''
 currency_code: 'MXN'
 tax: '16.0 %'
+success_url: '/sales/success'
+error_url: '/sales/fails'

@@ -1,0 +1,11 @@
+ppss.admin_settings:
+  route_name: ppss.admin_settings
+  title: Settings
+  base_route: ppss.admin_settings
+  weight: 0
+  
+#ppss.admin_settings_roles.link:
+#  route_name: ppss.admin_roles_links
+#  title: Roles & SKUs
+#  base_route: ppss.admin_settings
+#  weight: 10

@@ -8,7 +8,9 @@
 function ppss_schema()
 {
     // Create database table called 'ppss_sales' with the following colums:
-    // 1) id [serial], 2) uid [int], 3) mail [varchart], 4) details [varchart]
+    // 1) id [serial], 2) uid [int], 3) status [int], 4) mail [varchart],
+    // 5) platform [varchart], 6) frequency [varchart], 7) interval [int],
+    // 8) details [varchart], 9) created [int]
     $schema['ppss_sales'] = [
       'description' => 'Stores email, timestamp, uid  and details for the sale.',
       'fields' => [
@@ -20,6 +22,12 @@ function ppss_schema()
         ],
         'uid' => [
           'description' => 'The {users}.uid That added this sale.',
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'status' => [
+          'description' => "The statuses of the subscripstion plan.",
           'type' => 'int',
           'not null' => TRUE,
           'default' => 0,
@@ -38,6 +46,19 @@ function ppss_schema()
           'not null' => TRUE,
           'default' => 'PayPal',
         ],
+        'frequency' => [
+          'description' => "The field to store frequency in a recurring subscription agreement. Valid values are DAY,WEEK,MONTH or YEAR",
+          'type' => 'varchar',
+          'length' => 10,
+          'not null' => FALSE,
+          'default' => 'MONTH',
+        ],
+        'frequency_interval' => [
+          'description' => "The field to save interval between charges in subscriptions.",
+          'type' => 'int',
+          'not null' => FALSE,
+          'default' => 1,
+        ],
         'details' => [
           'description' => "Transaction details returned by PayPal.",
           'type' => 'varchar',
@@ -55,6 +76,7 @@ function ppss_schema()
       'primary key' => ['id'],
       'indexes' => [
         'user' => ['uid'],
+        'state' => ['status'],
       ],
     ];
   return $schema;
