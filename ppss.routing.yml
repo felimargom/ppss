@@ -1,3 +1,4 @@
+# General admin settings
 ppss.admin_settings:
   path: /admin/config/services/ppss
   defaults: 
@@ -13,3 +14,21 @@ ppss.admin_settings:
 #    _title: PPSS Roles & SKUs
 #  requirements:
 #    _permission: administer ppss
+
+# Webhook notification settings
+ppss.webhook_settings:
+  path: '/admin/config/services/ppss/webhook'
+  defaults:
+    _form: '\Drupal\ppss\Form\PPSSFormWebhook'
+    _title: 'PPSS Webhook token'
+  requirements:
+    _permission: 'administer site configuration'
+
+# The route where notification incoming calls are received.
+ppss.webhook_listener:
+  path: /ppss/webhook/listener'
+  defaults:
+    _controller: '\Drupal\ppss\Controller\PPSSWebhookController::listener'
+    _title: 'Webhook notification listener'
+  requirements:
+    _custom_access: '\Drupal\ppss\Controller\PPSSWebhookController::access'
