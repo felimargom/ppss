@@ -2,10 +2,11 @@
 
 /**
  * @file
- * Process a queue of webhook notification payload data in PPSSConfirmSale contained in PPSSConfirmSale.php
+ * Process a queue of webhook notification payload data in listener() contained in
+ * PPSSWebhookController.php
  */
 
-namespace Drupal\PPSS\Plugin\QueueWorker;
+namespace Drupal\ppss\Plugin\QueueWorker;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
@@ -23,7 +24,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   cron = {"time" = 30}
  * )
  */
-class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPluginInterface
+{
 
   /**
    * The default logger service.
@@ -35,14 +37,14 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
   /**
    * CRUD service for entities managed via notifications.
    *
-   * @var \Drupal\PPSS\WebhookCrudManager
+   * @var \Drupal\ppss\WebhookCrudManager
    */
   protected $entityCrud;
 
   /**
    * The UUID lookup service.
    *
-   * @var \Drupal\PPSS\WebhookUuidLookup
+   * @var \Drupal\ppss\WebhookUuidLookup
    */
   protected $uuidLookup;
 
@@ -54,9 +56,9 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
    * @param mixed $plugin_definition
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
-   * @param \Drupal\PPSS\CrudManader $crud_manager
+   * @param \Drupal\ppss\CrudManager $crud_manager
    *   An instance of the custom entity CRUD manager.
-   * @param \Drupal\PPSS\WebhookUuidLookup $uuid_lookup
+   * @param \Drupal\ppss\WebhookUuidLookup $uuid_lookup
    *   An instance of the UUID lookup service.
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition,
@@ -66,6 +68,7 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
     $this->logger = $logger;
     $this->entityCrud = $crud_manager;
     $this->uuidLookup = $uuid_lookup;
+    \Drupal::logger('PPSS')->info('Inside constructor');
   }
 
   /**
@@ -74,13 +77,15 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
   public static function create(ContainerInterface $container, array $configuration,
     $plugin_id, $plugin_definition)
   {
+    \Drupal::logger('PPSS')->info('Inside create');
+    \Drupal::logger('PPSS')->info($configuration);
     return new static(
       empty($configuration) ? [] : $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('logger.channel.default'),
-      $container->get('webhook_entities.crud_manager'),
-      $container->get('webhook_entities.uuid_lookup')
+      $container->get('ppss.crud_manager'),
+      $container->get('ppss.uuid_lookup')
     );
   }
 
@@ -95,6 +100,8 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
       // Decode the JSON payload to a PHP object.
       $entity_data = json_decode($payload);
 
+      \Drupal::logger('PPSS')->info($entity_data);
+      exit();
       // Only process the notification if it contains a UUID.
       if (isset($entity_data->uuid)) {
 
@@ -152,6 +159,8 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
       else {
         $this->logger->warning('Webhook notification received but not processed because UUID was missing');
       }
+    } else {
+      \Drupal::logger('PPSS')->error('Nada que procesar');
     }
   }
 

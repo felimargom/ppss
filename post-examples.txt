@@ -1,0 +1,219 @@
+https://webhook.site/361d087f-fae3-4821-a013-8a61b8a0ae67
+
+https://developer.paypal.com/api/rest/webhooks/
+
+
+Billing plan created
+
+{
+  "id": "WH-9BC87562XN2588303-1GN955435R661687G",
+  "create_time": "2018-19-12T22:20:32.000Z",
+  "resource_type": "plan",
+  "event_type": "BILLING.PLAN.CREATED",
+  "summary": "A billing plan was created.",
+  "resource": {
+    "update_time": "2018-12-10T21:20:49Z",
+    "create_time": "2018-12-10T21:20:49Z",
+    "usage_type": "LICENSED",
+    "payment_preferences": {
+      "service_type": "PREPAID",
+      "auto_bill_outstanding": true,
+      "setup_fee": {
+        "value": "10",
+        "currency_code": "USD"
+      },
+      "setup_fee_failure_action": "CONTINUE",
+      "payment_failure_threshold": 3
+    },
+    "product_id": "PROD-XXCD1234QWER65782",
+    "name": "Zoho Marketing Campaign  Plan",
+    "billing_cycles": [
+      {
+        "frequency": {
+          "interval_unit": "MONTH",
+          "interval_count": 1
+        },
+        "tenure_type": "TRIAL",
+        "sequence": 1,
+        "total_cycles": 1,
+        "pricing_scheme": {
+          "fixed_price": {
+            "value": "50",
+            "currency_code": "USD"
+          },
+          "tier_mode": "VOLUME",
+          "tiers": [
+            {
+              "starting_quantity": "1",
+              "ending_quantity": "1000",
+              "amount": {
+                "value": "100",
+                "currency_code": "USD"
+              }
+            },
+            {
+              "starting_quantity": "1001",
+              "amount": {
+                "value": "200",
+                "currency_code": "USD"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "frequency": {
+          "interval_unit": "MONTH",
+          "interval_count": 1
+        },
+        "tenure_type": "REGULAR",
+        "sequence": 2,
+        "total_cycles": 12,
+        "pricing_scheme": {
+          "fixed_price": {
+            "value": "100",
+            "currency_code": "USD"
+          },
+          "tier_mode": "VOLUME",
+          "tiers": [
+            {
+              "starting_quantity": "1",
+              "ending_quantity": "1000",
+              "amount": {
+                "value": "300",
+                "currency_code": "USD"
+              }
+            },
+            {
+              "starting_quantity": "1001",
+              "amount": {
+                "value": "1000",
+                "currency_code": "USD"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "description": "Zoho Marketing Campaign Plan",
+    "taxes": {
+      "percentage": "10",
+      "inclusive": false
+    },
+    "links": [
+      {
+        "href": "https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ",
+        "rel": "edit",
+        "method": "PATCH"
+      }
+    ],
+    "id": "P-7GL4271244454362WXNWU5NQ",
+    "status": "ACTIVE"
+  },
+  "links": [
+    {
+      "href": "https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G",
+      "rel": "self",
+      "method": "GET",
+      "encType": "application/json"
+    },
+    {
+      "href": "https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G/resend",
+      "rel": "resend",
+      "method": "POST",
+      "encType": "application/json"
+    }
+  ],
+  "event_version": "1.0",
+  "resource_version": "2.0"
+}
+
+Para validar:
+
+<transmissionId>|<timeStamp>|<webhookId>|<crc32>
+
+Ej.:
+33c42c80-96a8-11ed-ade0-611b3e26505c|2023-01-17T20:47:48Z|WH-55TG7562XN2588878-8YH955435R771687G|c89173a0
+
+Headers
+connection	close
+content-length	2068
+x-b3-spanid	d136047e3e32865c
+correlation-id	500f64d97eed8
+user-agent	PayPal/AUHD-214.0-57970755
+content-type	application/json
+paypal-auth-algo	SHA256withRSA
+paypal-cert-url	https://api.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-38317689
+paypal-auth-version	v2
+paypal-transmission-sig	iTgJnM4mf7jNDtkn1TsoTfJC/33Myjr7uZG3K2HOiQGImJ9wjPhVNQ0MOWmx36/+LWxomS9rH1yB50+1Hl/049utWilcPzVRRTWPmZU/OWm6t1AlL4p5m501tO6ZqjDxl+8EBt579BR8Rbpc28JmniFyidcBN7E9KgKK3ycgbNPhrjz4W7qq/OKp5n85ppDjiRlkQkpDxczCrYNwQO/gAB/Ufi4i0wXUuKlWwJZiJaA1ol9qIlneyYzhXA/N1n/WQj1uLpiNCmeakjkic9Ke/MCPf7NytYbnER+C0eKIky7IqqkoURdV1DMw4OJaFNHuZunsAPwC9VwBzdywHnsBqg==
+paypal-transmission-time	2023-01-17T20:47:48Z
+paypal-transmission-id	33c42c80-96a8-11ed-ade0-611b3e26505c
+accept	*/*
+host	webhook.site
+
+{"id":"WH-9BC87562XN2588303-1GN955435R661687G","create_time":"2018-19-12T22:20:32.000Z","event_type":"BILLING.PLAN.CREATED","event_version":"1.0","resource_type":"plan","resource_version":"2.0","summary":"A billing plan was created.","resource":{"id":"P-7GL4271244454362WXNWU5NQ","product_id":"PROD-XXCD1234QWER65782","name":"Zoho Marketing Campaign  Plan","description":"Zoho Marketing Campaign Plan","status":"ACTIVE","usage_type":"LICENSED","billing_cycles":[{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"TRIAL","sequence":1,"total_cycles":1,"pricing_scheme":{"fixed_price":{"value":"50","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"100","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"200","currency_code":"USD"}}]}},{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"REGULAR","sequence":2,"total_cycles":12,"pricing_scheme":{"fixed_price":{"value":"100","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"300","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"1000","currency_code":"USD"}}]}}],"payment_preferences":{"service_type":"PREPAID","auto_bill_outstanding":true,"setup_fee":{"value":"10","currency_code":"USD"},"setup_fee_failure_action":"CONTINUE","payment_failure_threshold":3},"taxes":{"percentage":"10","inclusive":false},"create_time":"2018-12-10T21:20:49Z","update_time":"2018-12-10T21:20:49Z","links":[{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"edit","method":"PATCH"}]},"links":[{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G/resend","rel":"resend","method":"POST"}]}
+
+
+
+Headers
+connection	close
+content-length	2068
+x-b3-spanid	5a9d082d821d735d
+correlation-id	c7ad65ebde2c3
+user-agent	PayPal/AUHD-214.0-57970755
+content-type	application/json
+paypal-auth-algo	SHA256withRSA
+paypal-cert-url	https://api.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-38317689
+paypal-auth-version	v2
+paypal-transmission-sig	BadAuC+E/DAsFFbHpcc+dKqoEBkUcaKzptViLkLnw4e/TfuZbqUDlScped4Tac72QcZqj50UW60NWY9xc35Hec5LlB9IaQvgvUoKMZ1hZE0/PlyHIstsPKHi6WD1YmPO1sbN7v+xd4bmOgkP5C63rdUzLtvHZJ314e44rUp8sSAZ6FbedTY9MVNt8/V8VxpfNEwdf9vzTFo/XKTR0GyKH4SBYSxcFD2suEFG6zSbh7OlcFEZGLvBzCbrmp9k+JSCmrOxX0wz7SXu05gRb5skFUnqNVXWD6VRaUR24u1t0SsXmW5oruI46wBQOH8+O14xfeYyIGrRqUV7PzG6byBPUA==
+paypal-transmission-time	2023-01-17T20:48:37Z
+paypal-transmission-id	50dc4b40-96a8-11ed-ac99-8fba876b7974
+accept	*/*
+host	webhook.site
+
+{"id":"WH-9BC87562XN2588303-1GN955435R661687G","create_time":"2018-19-12T22:20:32.000Z","event_type":"BILLING.PLAN.CREATED","event_version":"1.0","resource_type":"plan","resource_version":"2.0","summary":"A billing plan was created.","resource":{"id":"P-7GL4271244454362WXNWU5NQ","product_id":"PROD-XXCD1234QWER65782","name":"Zoho Marketing Campaign  Plan","description":"Zoho Marketing Campaign Plan","status":"ACTIVE","usage_type":"LICENSED","billing_cycles":[{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"TRIAL","sequence":1,"total_cycles":1,"pricing_scheme":{"fixed_price":{"value":"50","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"100","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"200","currency_code":"USD"}}]}},{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"REGULAR","sequence":2,"total_cycles":12,"pricing_scheme":{"fixed_price":{"value":"100","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"300","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"1000","currency_code":"USD"}}]}}],"payment_preferences":{"service_type":"PREPAID","auto_bill_outstanding":true,"setup_fee":{"value":"10","currency_code":"USD"},"setup_fee_failure_action":"CONTINUE","payment_failure_threshold":3},"taxes":{"percentage":"10","inclusive":false},"create_time":"2018-12-10T21:20:49Z","update_time":"2018-12-10T21:20:49Z","links":[{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"edit","method":"PATCH"}]},"links":[{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-9BC87562XN2588303-1GN955435R661687G/resend","rel":"resend","method":"POST"}]}
+
+
+
+Headers
+connection	close
+content-length	2068
+x-b3-spanid	dae5361719ce4e23
+correlation-id	4d454cc460ffb
+user-agent	PayPal/AUHD-214.0-57970755
+content-type	application/json
+paypal-auth-algo	SHA256withRSA
+paypal-cert-url	https://api.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-38317689
+paypal-auth-version	v2
+paypal-transmission-sig	B5c2gF2G8JpTbzwlcWJ7ntyxrlbGYFOv8gZBETUn5WQeopjsCqpAWG5GbVZMhEjtgzQfjukGJdtOGNskpVjg1sP6xI8I9VhUS3Em5NckhC9TPOA60GwMOXnq+3KgpgxEoquGH0TBnV4/detAFIoNbsXdmClfMRDAjs3879Q3oKtyrFAA4EC9Q28rPSi3Foz+84fcgGsYok4yQClX/c+RpIIOaPVaM18b5cjzu/otFXQvsBxrQlh7umbbReWc80SI4XjtGwu66Ckrxen+eHOW+z6Yk5aan7w5gaLHjKBRN26kpc9tBOxa6LPWkm32PpNLLrN2N5i7cJIu4XgtW5eC2g==
+paypal-transmission-time	2023-01-17T20:50:39Z
+paypal-transmission-id	99f13f70-96a8-11ed-9eba-97f265845606
+accept	*/*
+host	webhook.site
+
+
+{"id":"WH-55TG7562XN2588878-8YH955435R661687G","create_time":"2018-19-12T22:20:32.000Z","event_type":"BILLING.PLAN.UPDATED","event_version":"1.0","resource_type":"plan","resource_version":"2.0","summary":"A billing plan was updated.","resource":{"id":"P-7GL4271244454362WXNWU5NQ","product_id":"PROD-XXCD1234QWER65782","name":"Zoho Marketing Campaign  Plan","description":"Zoho Marketing Campaign Plan","status":"ACTIVE","usage_type":"LICENSED","billing_cycles":[{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"TRIAL","sequence":1,"total_cycles":1,"pricing_scheme":{"fixed_price":{"value":"50","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"100","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"200","currency_code":"USD"}}]}},{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"REGULAR","sequence":2,"total_cycles":12,"pricing_scheme":{"fixed_price":{"value":"100","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"300","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"1000","currency_code":"USD"}}]}}],"payment_preferences":{"service_type":"PREPAID","auto_bill_outstanding":true,"setup_fee":{"value":"10","currency_code":"USD"},"setup_fee_failure_action":"CONTINUE","payment_failure_threshold":3},"taxes":{"percentage":"10","inclusive":false},"create_time":"2018-12-10T21:20:49Z","update_time":"2018-12-10T21:20:49Z","links":[{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"edit","method":"PATCH"}]},"links":[{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-55TG7562XN2588878-8YH955435R661687G","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-55TG7562XN2588878-8YH955435R661687G/resend","rel":"resend","method":"POST"}]}
+
+
+
+connection	close
+content-length	2161
+x-b3-spanid	ff98f182a146b103
+correlation-id	b58e6671d601a
+user-agent	PayPal/AUHD-214.0-57970755
+content-type	application/json
+paypal-auth-algo	SHA256withRSA
+paypal-cert-url	https://api.paypal.com/v1/notifications/certs/CERT-360caa42-fca2a594-38317689
+paypal-auth-version	v2
+paypal-transmission-sig	MSJc3YYytOvEsoHdEMcYycXVNqJbNAxX5AK7Lr59aEJMmQS9HfzjMWvDx8c5jTixsrNNme8J5n5Cex+Eu2Wn/Na4NNvAZeug9q2QMIa5ZB9wNRgyr2ZiVbv8P8rj2T8EC/0rDEYBBJBOPkZ2NoC2xGoQBkX8u9IUmvoDILtNBtZz3k6WVSiIQY0xfaX41d8b4Twi6fuzB5SRvheHmNxRmhFFD9cewHYPrgEQRyrYCwp6Lx8mqtix5KQmE8SUrxlIKsSVIVeQZJAU3mctAkMLgHp74CNhA89+cxNl/Y5FwVsCbtFNDUqEvSNIpyymHSCOutI3Omb+hISnq5YkLxeCZg==
+paypal-transmission-time	2023-01-17T20:52:59Z
+paypal-transmission-id	ed45a530-96a8-11ed-bd34-7166bdae9951
+accept	*/*
+host	webhook.site
+
+{"id":"WH-55TG7562XN2588878-8YH955435R771687G","create_time":"2018-19-12T22:20:32.000Z","event_type":"BILLING.PLAN.PRICING-CHANGE.ACTIVATED","event_version":"1.0","resource_type":"plan","resource_version":"2.0","summary":"A billing plan pricing change is activated.","resource":{"id":"P-7GL4271244454362WXNWU5NQ","product_id":"PROD-XXCD1234QWER65782","name":"Zoho Marketing Campaign  Plan","description":"Zoho Marketing Campaign Plan","status":"ACTIVE","usage_type":"LICENSED","billing_cycles":[{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"TRIAL","sequence":1,"total_cycles":1,"pricing_scheme":{"status":"ACTIVE","version":2,"fixed_price":{"value":"50","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"100","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"200","currency_code":"USD"}}]}},{"frequency":{"interval_unit":"MONTH","interval_count":1},"tenure_type":"REGULAR","sequence":2,"total_cycles":12,"pricing_scheme":{"status":"ACTIVE","version":1,"fixed_price":{"value":"100","currency_code":"USD"},"tier_mode":"VOLUME","tiers":[{"starting_quantity":"1","ending_quantity":"1000","amount":{"value":"300","currency_code":"USD"}},{"starting_quantity":"1001","amount":{"value":"1000","currency_code":"USD"}}]}}],"payment_preferences":{"service_type":"PREPAID","auto_bill_outstanding":true,"setup_fee":{"value":"10","currency_code":"USD"},"setup_fee_failure_action":"CONTINUE","payment_failure_threshold":3},"taxes":{"percentage":"10","inclusive":false},"create_time":"2018-12-10T21:20:49Z","update_time":"2018-12-10T21:20:49Z","links":[{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/billing/plans/P-5ML4271244454362WXNWU5NQ","rel":"edit","method":"PATCH"}]},"links":[{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-55TG7562XN2588878-8YH955435R771687G","rel":"self","method":"GET"},{"href":"https://api.paypal.com/v1/notifications/webhooks-events/WH-55TG7562XN2588878-8YH955435R771687G/resend","rel":"resend","method":"POST"}]}

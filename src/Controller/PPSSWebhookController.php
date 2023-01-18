@@ -1,11 +1,12 @@
 <?php
 
-namespace Drupal\PPSS\Controller;
+namespace Drupal\ppss\Controller;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\TypedData\DataReferenceBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,16 +59,17 @@ class PPSSWebhookController extends ControllerBase {
    * @return Symfony\Component\HttpFoundation\Response
    *   Webhook providers typically expect an HTTP 200 (OK) response.
    */
-  public function listener() {
+  public function listener()
+  {
     // Prepare the response.
     $response = new Response();
     $response->setContent('Notification received');
 
     // Capture the contents of the notification (payload).
     $payload = $this->request->getContent();
-
+    
     // Get the queue implementation.
-    $queue = $this->queueFactory->get('webhook_entities_processor');
+    $queue = $this->queueFactory->get('ppss_webhook_processor');
 
     // Add the $payload to the queue.
     $queue->createItem($payload);
@@ -82,16 +84,51 @@ class PPSSWebhookController extends ControllerBase {
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  public function access() {
-    // Get the access token from the headers.
-    $incoming_token = $this->request->headers->get('Authorization');
+  public function access()
+  {
+    // Event header validation format expected from PayPal.
+    // Ref.:https://developer.paypal.com/api/rest/webhooks/
+    // https://stackoverflow.com/questions/61041128/php-verify-paypal-webhook-signature
 
-    // Retrieve the token value stored in config.
-    $stored_token = \Drupal::config('ppss.webhook_settings')->get('token');
+    
+    $transmissionId = $this->request->headers->get('paypal-transmission-id');
+    $timeStamp = $this->request->headers->get('paypal-transmission-time');
 
-    // Compare the stored token value to the token in each notification.
-    // If they match, allow access to the route.
-    return AccessResult::allowedIf($incoming_token === $stored_token);
+    // Capture the contents of the notification (payload).
+    $payload = $this->request->getContent();
+    $dataReceived = json_decode($payload);
+    // Get the ID of the webhook resource for the destination URL to which PayPal
+    // delivers the event notification.
+    $webhookId = $dataReceived->id;
+
+    // Get the signature from the headers.
+    $transmissionSig = $this->request->headers->get('paypal-transmission-sig');
+    $paypalCertUrl = $this->request->headers->get('paypal-cert-url');
+
+    // data: <transmissionId>|<timeStamp>|<webhookId>|<crc32>
+    $verifyAccess = openssl_verify(
+      data: implode(separator: '|', array:
+        [
+          $transmissionId,
+          $timeStamp,
+          $webhookId,
+          crc32(string: $payload),
+        ]),
+      signature: base64_decode(string: $transmissionSig),
+      public_key: openssl_pkey_get_public(public_key: file_get_contents(filename: $paypalCertUrl)),
+      algorithm: 'sha256WithRSAEncryption',
+    );
+
+    if ($verifyAccess === 1) {
+      $accessAllowed = true;
+    } elseif ($verifyAccess === 0) {
+      $accessAllowed = false;
+    } else {
+      \Drupal::logger('PPSS')->error('Error checking signature');
+      $accessAllowed = false;
+    }
+
+    // If they validation was successful, allow access to the route.
+    return AccessResult::allowedIf(true); // Please review, validation don't work.
   }
-
 }

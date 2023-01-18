@@ -20,7 +20,7 @@ class PPSSFormWebhook extends ConfigFormBase {
    *
    * @var string
    */
-  const SETTINGS = 'ppss_webhook.settings';
+  const SETTINGS = 'ppss.settings';
 
   /**
    * {@inheritdoc}
