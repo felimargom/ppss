@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * Primarily serves as a gatekeeper that receives incoming notifications, determines
+ * whether or not to act on them (via the authorize method), and then shuttles them
+ * along to their final destination.
+ */
+
 namespace Drupal\ppss\Controller;
 
 use Drupal\Core\Access\AccessResult;
@@ -14,7 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Defines a controller for managing webhook notifications.
  */
-class PPSSWebhookController extends ControllerBase {
+class PPSSWebhookController extends ControllerBase
+{
 
   /**
    * The HTTP request object.
@@ -38,7 +46,8 @@ class PPSSWebhookController extends ControllerBase {
    * @param Drupal\Core\Queue\QueueFactory $queue
    *  The queue factory.
    */
-  public function __construct(Request $request, QueueFactory $queue) {
+  public function __construct(Request $request, QueueFactory $queue)
+  {
     $this->request = $request;
     $this->queueFactory = $queue;
   }
@@ -46,11 +55,12 @@ class PPSSWebhookController extends ControllerBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container)
+  {
     return new static(
-      $container->get('request_stack')->getCurrentRequest(),
-      $container->get('queue')
-    );
+        $container->get('request_stack')->getCurrentRequest(),
+        $container->get('queue'),
+      );
   }
 
   /**
@@ -108,12 +118,12 @@ class PPSSWebhookController extends ControllerBase {
     // data: <transmissionId>|<timeStamp>|<webhookId>|<crc32>
     $verifyAccess = openssl_verify(
       data: implode(separator: '|', array:
-        [
-          $transmissionId,
-          $timeStamp,
-          $webhookId,
-          crc32(string: $payload),
-        ]),
+      [
+        $transmissionId,
+        $timeStamp,
+        $webhookId,
+        crc32(string: $payload),
+      ]),
       signature: base64_decode(string: $transmissionSig),
       public_key: openssl_pkey_get_public(public_key: file_get_contents(filename: $paypalCertUrl)),
       algorithm: 'sha256WithRSAEncryption',

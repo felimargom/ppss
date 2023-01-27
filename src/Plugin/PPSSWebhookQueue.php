@@ -61,31 +61,41 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
    * @param \Drupal\ppss\WebhookUuidLookup $uuid_lookup
    *   An instance of the UUID lookup service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition,
-    LoggerInterface $logger, WebhookCrudManager $crud_manager, WebhookUuidLookup $uuid_lookup)
+  public function __construct(
+      array $configuration,
+      $pluginId,
+      $pluginDefinition,
+      LoggerInterface $logger,
+      WebhookCrudManager $crudManager,
+      WebhookUuidLookup $uuidLookup
+    )
   {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    parent::__construct($configuration, $pluginId, $pluginDefinition);
     $this->logger = $logger;
-    $this->entityCrud = $crud_manager;
-    $this->uuidLookup = $uuid_lookup;
+    $this->entityCrud = $crudManager;
+    $this->uuidLookup = $uuidLookup;
     \Drupal::logger('PPSS')->info('Inside constructor');
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration,
-    $plugin_id, $plugin_definition)
+  public static function create(
+      ContainerInterface $container,
+      array $configuration,
+      $pluginId,
+      $pluginDefinition
+    )
   {
     \Drupal::logger('PPSS')->info('Inside create');
     \Drupal::logger('PPSS')->info($configuration);
     return new static(
       empty($configuration) ? [] : $configuration,
-      $plugin_id,
-      $plugin_definition,
+      $pluginId,
+      $pluginDefinition,
       $container->get('logger.channel.default'),
       $container->get('ppss.crud_manager'),
-      $container->get('ppss.uuid_lookup')
+      $container->get('ppss.uuid_lookup'),
     );
   }
 
@@ -100,8 +110,6 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
       // Decode the JSON payload to a PHP object.
       $entity_data = json_decode($payload);
 
-      \Drupal::logger('PPSS')->info($entity_data);
-      exit();
       // Only process the notification if it contains a UUID.
       if (isset($entity_data->uuid)) {
 
@@ -154,13 +162,12 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
             ]);
           }
         }
-      }
-      // Throw a warning if the payload doesn't contain a UUID.
-      else {
+      } else { // Throw a warning if the payload doesn't contain a UUID.
         $this->logger->warning('Webhook notification received but not processed because UUID was missing');
       }
     } else {
       \Drupal::logger('PPSS')->error('Nada que procesar');
+      
     }
   }
 
