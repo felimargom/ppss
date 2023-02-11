@@ -202,58 +202,62 @@ class PPSSConfirmSale extends FormBase
         ];
       }
 
-      // Save all transaction data in DB for future reference.
-      try {
-        // Initiate missing variables to save.
-        $currentTime = \Drupal::time()->getRequestTime();
+      // validate purchase register
+      $query = \Drupal::database()->query("select * from ppss_sales where FROM_UNIXTIME(created,'%d/%m/%Y') = '".date('d/m/Y')."' and uid = $uid");
+      $count_result= count($query->fetchAll());
+      if ($count_result == 0) {
+        // Save all transaction data in DB for future reference.
+        try {
+          // Initiate missing variables to save.
+          $currentTime = \Drupal::time()->getRequestTime();
 
-        // Save the values to the database
+          // Save the values to the database
 
-        // Start to build a query builder object $query.
-        // Ref.: https://www.drupal.org/docs/drupal-apis/database-api/insert-queries
-        $query = Drupal::database()->insert('ppss_sales');
+          // Start to build a query builder object $query.
+          // Ref.: https://www.drupal.org/docs/drupal-apis/database-api/insert-queries
+          $query = Drupal::database()->insert('ppss_sales');
 
-        // Specify the fields taht the query will insert to.
-        $query->fields([
-          'uid',
-          'status',
-          'mail',
-          'platform',
-          'frequency',
-          'frequency_interval',
-          'details',
-          'created',
-        ]);
+          // Specify the fields taht the query will insert to.
+          $query->fields([
+            'uid',
+            'status',
+            'mail',
+            'platform',
+            'frequency',
+            'frequency_interval',
+            'details',
+            'created',
+          ]);
 
-        // Set the values of the fields we selected.
-        // Note that then must be in the same order as we defined them
-        // in the $query->fields([...]) above.
-        $query->values([
-          $uid,
-          1,
-          $email,
-          $paymentPlatform,
-          $frequency,
-          $interval,
-          $retrieveDataSale,
-          $currentTime,
-        ]);
+          // Set the values of the fields we selected.
+          // Note that then must be in the same order as we defined them
+          // in the $query->fields([...]) above.
+          $query->values([
+            $uid,
+            1,
+            $email,
+            $paymentPlatform,
+            $frequency,
+            $interval,
+            $retrieveDataSale,
+            $currentTime,
+          ]);
 
-        // Execute the query!
-        // Drupal handles the exact syntax of the query automatically
-        $query->execute();
+          // Execute the query!
+          // Drupal handles the exact syntax of the query automatically
+          $query->execute();
 
-        // Provide the form submitter a nice message.
-        \Drupal::messenger()->addMessage(t('Successful subscription purchase.'));
-      } catch (\Exception $e) {
-        // Show error message to the user
-        $errorInfo = t('Unable to save payment to DB at this time due to database error.
-          Please contact with the site administrator and explain this situation.');
-        \Drupal::messenger()->addError($errorInfo);
-        \Drupal::logger('Sales')->error($errorInfo);
-        \Drupal::logger('PPSS')->error($e->getMessage());
+          // Provide the form submitter a nice message.
+          \Drupal::messenger()->addMessage(t('Successful subscription purchase.'));
+        } catch (\Exception $e) {
+          // Show error message to the user
+          $errorInfo = t('Unable to save payment to DB at this time due to database error.
+            Please contact with the site administrator and explain this situation.');
+          \Drupal::messenger()->addError($errorInfo);
+          \Drupal::logger('Sales')->error($errorInfo);
+          \Drupal::logger('PPSS')->error($e->getMessage());
+        }
       }
-
     }
 
     return $form;
