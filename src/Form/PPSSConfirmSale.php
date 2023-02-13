@@ -153,7 +153,7 @@ class PPSSConfirmSale extends FormBase
           $result = array();
           $result = _user_mail_notify('register_no_approval_required', $user);
 
-          if ((is_null($result)) && $result == false) {
+          if ((is_null($result)) or $result == false) {
 
             $message = t('There was a problem sending your email notification to @email.',
               array('@email' => $email));
