@@ -121,8 +121,7 @@ class PPSSConfirmSale extends FormBase
             \Drupal::logger('PPSS')->error($e->getMessage());
           }
           $form['description'] = [
-            '#markup' => $this->t("Please login with your user account linked to this email:
-              $email for begin use our services."),
+            '#markup' => $this->t("Please login with your user account linked to this email: @email for begin use our services.", ['@email' => $email]),
           ];
         } else {
           // Creates a new user with the PayPal email.
@@ -164,8 +163,7 @@ class PPSSConfirmSale extends FormBase
           } else {
 
             $form['description'] = [
-              '#markup' => $this->t("Please review your email: $email to login details
-                and begin use our services."),
+              '#markup' => $this->t("Please review your email: @email to login details and begin use our services.", ['@email' => $email]),
             ];
 
           }
@@ -197,8 +195,7 @@ class PPSSConfirmSale extends FormBase
           \Drupal::logger('PPSS')->error($e->getMessage());
         }
         $form['description'] = [
-          '#markup' => $this->t("Your user account linked to this email:
-            $email was successfully upgraded, please enjoy."),
+          '#markup' => $this->t("Your user account linked to this email: @email was successfully upgraded, please enjoy.", ['@email' => $email]),
         ];
       }
 
