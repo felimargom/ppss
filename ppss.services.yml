@@ -1,0 +1,4 @@
+services:
+  ppss.webhook_crud:
+    class: Drupal\ppss\WebhookCrudManager
+    arguments: ['@entity_type.manager']
