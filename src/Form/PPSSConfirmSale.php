@@ -223,6 +223,7 @@ class PPSSConfirmSale extends FormBase
           'frequency_interval',
           'details',
           'created',
+          'id_subscription'
         ]);
 
         // Set the values of the fields we selected.
@@ -237,6 +238,7 @@ class PPSSConfirmSale extends FormBase
           $interval,
           $retrieveDataSale,
           $currentTime,
+          $datosUsuario->id
         ]);
 
         // Execute the query!
