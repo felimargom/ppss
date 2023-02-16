@@ -40,8 +40,10 @@ class PPSSConfirmSaleBlock extends BlockBase
     if (!(is_null($node))) {
       $request = \Drupal::request();
       $requestUri = $request->getRequestUri();
+      $config = \Drupal::config('ppss.settings');
+      $successUrl = $config->get('success_url');
 
-      if (strchr($requestUri, '/venta/exitosa')) {
+      if (strchr($requestUri, $successUrl)) {
         return AccessResult::allowedIfHasPermission($account, 'view ppss button');
       }
       
