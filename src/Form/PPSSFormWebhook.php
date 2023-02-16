@@ -52,6 +52,13 @@ class PPSSFormWebhook extends ConfigFormBase {
       '#default_value' => $config->get('token'),
       '#description' => t('The expected value in the Authorization header, often an API key or similar secret.'),
     ];
+    $form['webhook_id'] = [
+      '#type' => 'textfield',
+      '#title' => t('Webhook ID'),
+      '#required' => TRUE,
+      '#default_value' => $config->get('webhook_id'),
+      '#description' => t('The ID of the webhook resource for the destination URL to which PayPal delivers the event notification.'),
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -64,6 +71,7 @@ class PPSSFormWebhook extends ConfigFormBase {
     $this->configFactory->getEditable(static::SETTINGS)
       // Save the submitted token value.
       ->set('token', $form_state->getValue('token'))
+      ->set('webhook_id', $form_state->getValue('webhook_id'))
       ->save();
 
     $this->messenger()->addMessage($this->t('The configuration PPSS webook options have been saved.'));

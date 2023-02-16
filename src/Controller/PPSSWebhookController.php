@@ -96,6 +96,7 @@ class PPSSWebhookController extends ControllerBase
    */
   public function access()
   {
+    $config = \Drupal::config('ppss.settings');
     // Event header validation format expected from PayPal.
     // Ref.:https://developer.paypal.com/api/rest/webhooks/
     // https://stackoverflow.com/questions/61041128/php-verify-paypal-webhook-signature
@@ -109,7 +110,7 @@ class PPSSWebhookController extends ControllerBase
     $dataReceived = json_decode($payload);
     // Get the ID of the webhook resource for the destination URL to which PayPal
     // delivers the event notification.
-    $webhookId = $dataReceived->id;
+    $webhookId = $config->get('webhook_id');
 
     // Get the signature from the headers.
     $transmissionSig = $this->request->headers->get('paypal-transmission-sig');
@@ -139,6 +140,6 @@ class PPSSWebhookController extends ControllerBase
     }
 
     // If they validation was successful, allow access to the route.
-    return AccessResult::allowedIf(true); // Please review, validation don't work.
+    return AccessResult::allowedIf($verifyAccess); // Please review, validation don't work.
   }
 }
