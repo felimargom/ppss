@@ -7,7 +7,7 @@ package: Custom
 dependencies:
   - drupal:block
   
-version: '0.1'
+version: '0.2'
 project: ppss
 'interface translation project': ppss
 'interface translation server pattern': 'modules/custom/ppss/translations/ppss.es.po'
