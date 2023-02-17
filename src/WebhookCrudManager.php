@@ -6,6 +6,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\ClientInterface;
+use Drupal\Core\Config\ConfigFactory;
 
 /**
  *
@@ -22,6 +24,11 @@ class WebhookCrudManager {
   protected $entityTypeManager;
 
   /**
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected $httpClient;
+
+  /**
    * Constructs a WebhookCrudManager object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -29,8 +36,9 @@ class WebhookCrudManager {
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ClientInterface $http_client) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->httpClient = $http_client;
   }
 
   /**
@@ -97,8 +105,6 @@ class WebhookCrudManager {
    *   cancel subscription from encuentralo.
    */
   public function cancelSubscriptionE($id) {
-    $client = \Drupal::httpClient();
-    $token = '';//token paypal
     //validar que exista la suscripción y que este activa
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id_subscription', $id);
@@ -111,9 +117,9 @@ class WebhookCrudManager {
       $data['reason'] = 'Motivo de la cancelación';//*****falta definir
       try {
         //cancel subscription paypal
-        $res = $client->post('https://api-m.sandbox.paypal.com/v1/billing/subscriptions/'.$id.'/cancel', [
+        $res = $this->httpClient->post($this->url_paypal().'/v1/billing/subscriptions/'.$id.'/cancel', [
           'headers' => [ 
-            'Authorization' => 'Bearer '.$token.'',
+            'Authorization' => 'Bearer '.$this->accessToken().'',
             'Content-Type' => 'application/json'],
           'body' => json_encode($data),
         ]);
@@ -132,4 +138,34 @@ class WebhookCrudManager {
       return 'La suscripción ya esta cancelada';
     }
   }
+
+  /**
+   * 
+   *  Get access token for use the PayPal REST API server.
+   */
+  private function accessToken() {
+    $config = \Drupal::config('ppss.settings');
+    $clientId = $config->get('client_id');
+    $secret = $config->get('client_secret');
+    $response = $this->httpClient->request('POST', $this->url_paypal().'/v1/oauth2/token', [
+      'headers' => [
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/x-www-form-urlencoded',
+      ],
+      'body' => 'grant_type=client_credentials',
+      'auth' => [$clientId, $secret, 'basic']
+    ]);
+    $data = json_decode($response->getBody(), true);
+    return $data['access_token'];
+  }
+
+  private function url_paypal() {
+    $config = \Drupal::config('ppss.settings');
+    if ($config->get('sandbox_mode') == TRUE) {
+      return 'https://api-m.sandbox.paypal.com';
+    } else {
+      return 'https://api-m.paypal.com';
+    }
+  }
+
 }
