@@ -32,3 +32,10 @@ ppss.webhook_listener:
     _title: Webhook notification listener
   requirements:
     _custom_access: '\Drupal\ppss\Controller\PPSSWebhookController::access'
+ppss.cancel_subscription:
+  path: '/user/cancel_subscription/{id}'
+  defaults:
+    _controller: '\Drupal\ppss\Controller\PPSSWebhookController::cancel_subscription'
+    _title: 'Cancel'
+  requirements:
+    _user_is_logged_in: 'TRUE'

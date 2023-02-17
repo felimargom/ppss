@@ -91,5 +91,45 @@ class WebhookCrudManager {
     $query->execute();
   }
 
-  
+  /**
+   * 
+   * @param $id
+   *   cancel subscription from encuentralo.
+   */
+  public function cancelSubscriptionE($id) {
+    $client = \Drupal::httpClient();
+    $token = '';//token paypal
+    //validar que exista la suscripción y que este activa
+    $query = \Drupal::database()->select('ppss_sales', 's');
+    $query->condition('id_subscription', $id);
+    $query->condition('status', 1);
+    $query->fields('s');
+    $results = $query->execute()->fetchAll();
+    if(count($results) > 0) {
+      $data = [];
+      //razon de la cancelación
+      $data['reason'] = 'Motivo de la cancelación';//*****falta definir
+      try {
+        //cancel subscription paypal
+        $res = $client->post('https://api-m.sandbox.paypal.com/v1/billing/subscriptions/'.$id.'/cancel', [
+          'headers' => [ 
+            'Authorization' => 'Bearer '.$token.'',
+            'Content-Type' => 'application/json'],
+          'body' => json_encode($data),
+        ]);
+        //A successful request returns the HTTP 204 No Content status code
+        if($res->getStatusCode() == 204) {
+          return 'Suscripción cancelada';
+        } else {
+          return 'Error';
+        }
+      } catch (RequestException $e) {
+        $exception = $e->getResponse()->getBody();
+        $exception = json_decode($exception);
+        return $exception->error ?? $exception->message;
+      }
+    } else {
+      return 'La suscripción ya esta cancelada';
+    }
+  }
 }
