@@ -102,6 +102,13 @@ function ppss_update_9101() {
     'description' => 'date  expire.',
     'default' => null,
   ]);
+  $schema->addField('ppss_sales', 'id_role', [
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => FALSE,
+    'description' => 'User role ID.',
+    'default' => null,
+  ]);
 }
 
 /**
@@ -149,6 +156,7 @@ function ppss_update_9102() {
       'event_id' => [
         'description' => 'Webhook event id.',
         'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE
       ],
     ],
