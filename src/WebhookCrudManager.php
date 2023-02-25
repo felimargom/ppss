@@ -55,9 +55,10 @@ class WebhookCrudManager {
     $query->fields('sd',['created']);
     $query->orderBy('created', 'DESC');
     $results = $query->execute()->fetchAll();
-    $subscription = $results[0];
+    $subscription = $results[0];//get the last payment
     //calcular la fecha de vencimiento
     $status = 1;
+    //a la ultima fecha de pago sumar +1 frecuencia(mes/año)
     $expire = strtotime(date('d-m-Y',$subscription->created). ' + 1 '.$subscription->frequency.'');
     $today = date('d-m-Y');
     \Drupal::logger('PPSS')->error($expire);
@@ -77,7 +78,7 @@ class WebhookCrudManager {
 
   /**
    * 
-   * @return array $data
+   * @param array $data
    *   save data payment recurrent.
    */
   public function paymentCompleted($data) {
@@ -88,15 +89,20 @@ class WebhookCrudManager {
     $results = $query->execute()->fetchAll();
     $subscription = $results[0];
 
-    $query = \Drupal::database()->insert('ppss_sales_details');
-    $query->fields(['sid', 'total', 'iva', 'created']);
-    $query->values([
-      $subscription->id,
-      $data->resource->amount->total,
-      0,
-      \Drupal::time()->getRequestTime()
-    ]);
-    $query->execute();
+    try {
+      $query = \Drupal::database()->insert('ppss_sales_details');
+      $query->fields(['sid', 'total', 'iva', 'created', 'event_id']);
+      $query->values([
+        $subscription->id,
+        $data->resource->amount->total,
+        0,
+        \Drupal::time()->getRequestTime(),
+        $data->id
+      ]);
+      $query->execute();
+    } catch (\Exception $e) {
+      \Drupal::logger('PPSS')->error($e->getMessage());
+    }
   }
 
   /**
@@ -104,7 +110,7 @@ class WebhookCrudManager {
    * @param $id
    *   cancel subscription from encuentralo.
    */
-  public function cancelSubscriptionE($id) {
+  public function cancelSubscriptionE($id, $reason) {
     //validar que exista la suscripción y que este activa
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id_subscription', $id);
@@ -114,7 +120,7 @@ class WebhookCrudManager {
     if(count($results) > 0) {
       $data = [];
       //razon de la cancelación
-      $data['reason'] = 'Motivo de la cancelación';//*****falta definir
+      $data['reason'] = $reason;
       try {
         //cancel subscription paypal
         $res = $this->httpClient->post($this->url_paypal().'/v1/billing/subscriptions/'.$id.'/cancel', [

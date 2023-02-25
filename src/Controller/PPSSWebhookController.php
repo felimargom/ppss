@@ -143,19 +143,4 @@ class PPSSWebhookController extends ControllerBase
     return AccessResult::allowedIf($verifyAccess); // Please review, validation don't work.
   }
 
-  /**
-   * Cancel subscription from encuentralo.
-   *
-   * @param $id
-   * id subscrition
-   */
-  public function cancel_subscription($id){
-    //llamar al servicio
-    $cancel = \Drupal::service('ppss.webhook_crud')->cancelSubscriptionE($id);
-    $this->messenger()->addWarning($cancel);
-    return [
-      '#type' => 'markup',
-      '#markup' => "$cancel"
-    ];
-  }
 }
