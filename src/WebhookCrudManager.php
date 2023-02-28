@@ -96,7 +96,7 @@ class WebhookCrudManager {
         $subscription->id,
         $data->resource->amount->total,
         0,
-        \Drupal::time()->getRequestTime(),
+        strtotime($data->create_time),
         $data->id
       ]);
       $query->execute();
