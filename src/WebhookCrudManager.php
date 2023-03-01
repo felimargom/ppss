@@ -85,17 +85,18 @@ class WebhookCrudManager {
     //get data subscription
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id_subscription', $data->resource->billing_agreement_id);
-    $query->fields('s', ['id','uid','frequency', 'status']);
+    $query->fields('s', ['id','uid','frequency', 'status', 'details']);
     $results = $query->execute()->fetchAll();
     $subscription = $results[0];
-
+    $details = json_decode($subscription->details);
     try {
       $query = \Drupal::database()->insert('ppss_sales_details');
-      $query->fields(['sid', 'total', 'iva', 'created', 'event_id']);
+      $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
       $query->values([
         $subscription->id,
+        $details->plan->payment_definitions[0]->charge_models[0]->amount->value,
+        $details->plan->payment_definitions[0]->amount->value,
         $data->resource->amount->total,
-        0,
         strtotime($data->create_time),
         $data->id
       ]);
@@ -165,6 +166,10 @@ class WebhookCrudManager {
     return $data['access_token'];
   }
 
+  /**
+   * 
+   *  Get url paypal for use the PayPal REST API server.
+   */
   private function url_paypal() {
     $config = \Drupal::config('ppss.settings');
     if ($config->get('sandbox_mode') == TRUE) {

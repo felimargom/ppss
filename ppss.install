@@ -135,17 +135,26 @@ function ppss_update_9102() {
         'not null' => TRUE,
         'default' => 0,
       ],
-      'total' => [
-        'description' => "total",
-        'type' => 'numeric',
+      'tax' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
         'not null' => FALSE,
-        'default' => 0,
+        'description' => "plan tax",
       ],
-      'iva' => [
-        'description' => "iva",
-        'type' => 'numeric',
-        'not null' => TRUE,
-        'default' => 0,
+      'price' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
+        'not null' => FALSE,
+        'description' => "plan price",
+      ],
+      'total' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
+        'not null' => FALSE,
+        'description' => "total",
       ],
       'created' => [
         'description' => 'Timestamp for when was payment.',
