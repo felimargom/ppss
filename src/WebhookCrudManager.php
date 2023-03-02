@@ -49,31 +49,55 @@ class WebhookCrudManager {
   public function cancelSubscription($id) {
     //obtener los datos de la venta
     $query = \Drupal::database()->select('ppss_sales', 's');
-    $query->leftJoin('ppss_sales_details', 'sd', 's.id = sd.sid');
+    $query->join('ppss_sales_details', 'sd', 's.id = sd.sid');
     $query->condition('id_subscription', $id);
-    $query->fields('s', ['id','uid','frequency', 'status']);
-    $query->fields('sd',['created']);
+    $query->fields('s', ['id','uid','frequency', 'status', 'id_role']);
+    $query->fields('sd',['id', 'created']);
     $query->orderBy('created', 'DESC');
     $results = $query->execute()->fetchAll();
-    $subscription = $results[0];//get the last payment
-    //calcular la fecha de vencimiento
-    $status = 1;
-    //a la ultima fecha de pago sumar +1 frecuencia(mes/año)
-    $expire = strtotime(date('d-m-Y',$subscription->created). ' + 1 '.$subscription->frequency.'');
-    $today = date('d-m-Y');
-    \Drupal::logger('PPSS')->error($expire);
-    if(date('d-m-Y',$expire) == $today) {
-      $status = 0;
+    if(count($results) > 0 ) {
+      $subscription = $results[0];//get the last payment
+      //calcular la fecha de vencimiento
+      //a la ultima fecha de pago sumar +1 frecuencia(mes/año)
+      $expire = strtotime(date('d-m-Y',$subscription->created). ' + 1 '.$subscription->frequency.'');
+      $today = date('d-m-Y');
+      //Validación de fecha de expiración con fecha actual
+      if(date('d-m-Y',$expire) == $today) {
+        //actualizar la tabla de ppss_sales
+        \Drupal::database()->update('ppss_sales')->fields([
+          'status' => 0,
+          'expire' => $expire,
+        ])->condition('id_subscription', $id, '=')->execute();
+  
+        //Eliminar rol asignado de la suscripción del usuario 
+        try {
+          $user = \Drupal\user\Entity\User::load($subscription->uid); 
+          $user->removeRole($subscription->id_role);
+          $user->save();
+          \Drupal::logger('PPSS')->info('Se ha cancelado la suscripción '.$subscription->id_role.' del usuario '.$subscription->uid);
+        } catch (\Exception $e) {
+          \Drupal::logger('PPSS')->error($e->getMessage());
+        }
+      } else {
+        //actualizar la tabla de ppss_sales
+        \Drupal::database()->update('ppss_sales')->fields([
+          'expire' => $expire,
+        ])->condition('id_subscription', $id, '=')->execute();
+        \Drupal::logger('PPSS')->info('Se ha programado con fecha '.$expire.' la cancelación de la suscripción '.$subscription->id_role.' del usuario '.$subscription->uid);
+      }
+      //validar tipo de rol enterprise de plan Negocio
+      if($subscription->id_role == 'enterprise') {
+        //despublicar anuncios -asignar fecha de despublicación
+        $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)->condition('type', 'nvi_anuncios_e')->execute();
+        $entity = \Drupal::entityTypeManager()->getStorage("node");
+        $nodes = $entity->loadMultiple($nids);
+        foreach ($nodes as $node) {
+          //$node->setUnpublished(true)->save();
+          $node->unpublish_on = $expire;
+          $node->save();
+        }
+      }
     }
-    //actualizar la tabla de ppss_sales
-    \Drupal::database()->update('ppss_sales')->fields([
-      'status' => $status,
-      'expire' => $expire,
-    ])->condition('id_subscription', $id, '=')->execute();
-
-    //validar el tipo de rol
-
-    //despublicar anuncios
   }
 
   /**
