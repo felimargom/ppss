@@ -51,7 +51,7 @@ class WebhookCrudManager {
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->join('ppss_sales_details', 'sd', 's.id = sd.sid');
     $query->condition('id_subscription', $id);
-    $query->fields('s', ['id','uid','frequency', 'status', 'id_role']);
+    $query->fields('s', ['id','uid','frequency', 'status', 'id_role', 'mail']);
     $query->fields('sd',['id', 'created']);
     $query->orderBy('created', 'DESC');
     $results = $query->execute()->fetchAll();
@@ -110,7 +110,7 @@ class WebhookCrudManager {
       //Enviar correo a usuario y marketing
       $module = 'ppss';
       $key = 'cancel_subscription';
-      $to = \Drupal::currentUser()->getEmail()."; marketing@noticiasnet.mx";
+      $to = $subscription->mail."; marketing@noticiasnet.mx";
       $params['message'] = $msg;
       $params['subject'] = "Cancelación de suscripción - Encuéntralo";
       $langcode = \Drupal::currentUser()->getPreferredLangcode();
@@ -158,22 +158,23 @@ class WebhookCrudManager {
   /**
    * 
    * @param $id
-   *   cancel subscription from encuentralo.
+   *   cancel subscription from encuentralo use the PayPal REST API server.
    */
   public function cancelSubscriptionE($id, $reason) {
     //validar que exista la suscripción y que este activa
     $query = \Drupal::database()->select('ppss_sales', 's');
-    $query->condition('id_subscription', $id);
+    $query->condition('id', $id);
     $query->condition('status', 1);
+    $query->isNull('expire');
     $query->fields('s');
-    $results = $query->execute()->fetchAll();
-    if(count($results) > 0) {
+    $result = $query->execute()->fetchAssoc();
+    if($result) {
       $data = [];
       //razon de la cancelación
       $data['reason'] = $reason;
       try {
         //cancel subscription paypal
-        $res = $this->httpClient->post($this->url_paypal().'/v1/billing/subscriptions/'.$id.'/cancel', [
+        $res = $this->httpClient->post($this->url_paypal().'/v1/billing/subscriptions/'.$result['id_subscription'].'/cancel', [
           'headers' => [ 
             'Authorization' => 'Bearer '.$this->accessToken().'',
             'Content-Type' => 'application/json'],

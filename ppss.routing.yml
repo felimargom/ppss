@@ -33,7 +33,7 @@ ppss.webhook_listener:
   requirements:
     _custom_access: '\Drupal\ppss\Controller\PPSSWebhookController::access'
 ppss.cancel_subscription:
-  path: '/user/cancel_subscription/{id}'
+  path: '/user/{user}/cancel_subscription/{id}'
   defaults:
     _form: '\Drupal\ppss\Form\PPSSCancelSubscription'
     _title: 'Cancel'
