@@ -74,7 +74,8 @@ class WebhookCrudManager {
           $user = \Drupal\user\Entity\User::load($subscription->uid); 
           $user->removeRole($subscription->id_role);
           $user->save();
-          \Drupal::logger('PPSS')->info('Se ha cancelado la suscripción '.$subscription->id_role.' del usuario '.$subscription->uid);
+          $msg_info = 'Se ha cancelado la suscripción de plan '.$subscription->id_role.' del usuario '.$subscription->uid;
+          $msg_user = 'La suscripción ha sido cancelada,';
         } catch (\Exception $e) {
           \Drupal::logger('PPSS')->error($e->getMessage());
         }
@@ -83,7 +84,8 @@ class WebhookCrudManager {
         \Drupal::database()->update('ppss_sales')->fields([
           'expire' => $expire,
         ])->condition('id_subscription', $id, '=')->execute();
-        \Drupal::logger('PPSS')->info('Se ha programado con fecha '.$expire.' la cancelación de la suscripción '.$subscription->id_role.' del usuario '.$subscription->uid);
+        $msg_info = 'Se ha programado con fecha '.$expire.' la cancelación de la suscripción de plan '.$subscription->id_role.' del usuario '.$subscription->uid;
+        $msg_user = 'La suscripción ha sido programada para cancelar con fecha '.$expire;
       }
       //validar tipo de rol enterprise de plan Negocio
       if($subscription->id_role == 'enterprise') {
@@ -96,6 +98,29 @@ class WebhookCrudManager {
           $node->unpublish_on = $expire;
           $node->save();
         }
+      }
+      \Drupal::logger('PPSS')->info($msg_info);
+      $msg = '<div style="text-align: center;  margin: 20px;">
+      <h1> !Cancelación de suscripción en Encuéntralo! &#128577;</h1>
+      <br><div style="text-align: center; font-size: medium;">
+    '.$msg_user.' sin embargo cuentas con la opción Gratis para continuar publicando tus anuncios o puedes volver a contratar alguno de nuestros <a href=“https://www.encuentralo.digital/planes”>Planes</a>.
+      </div><br><br>
+      <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;"><br>--  El equipo de [site:name]</div></div>';
+
+      //Enviar correo a usuario y marketing
+      $module = 'ppss';
+      $key = 'cancel_subscription';
+      $to = \Drupal::currentUser()->getEmail()."; marketing@noticiasnet.mx";
+      $params['message'] = $msg;
+      $params['subject'] = "Cancelación de suscripción - Encuéntralo";
+      $langcode = \Drupal::currentUser()->getPreferredLangcode();
+      $send = true;
+      $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $langcode, $params, NULL, $send);
+      if ($result['result'] !== true) {
+        \Drupal::messenger()->addMessage(t('There was a problem sending your message and it was not sent.'), 'error');
+      }
+      else {
+        \Drupal::messenger()->addMessage(t('Your message has been sent.'));
       }
     }
   }
