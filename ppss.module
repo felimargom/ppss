@@ -39,17 +39,17 @@ function ppss_cron(){
       $user->removeRole($subscription->id_role);
       $user->save();
       $msg_info = 'Se ha cancelado la suscripción de plan '.$subscription->id_role.' del usuario '.$subscription->uid;
-      $msg_user = 'La suscripción ha sido cancelada,';
+      $msg_user = 'Tu suscripción ha sido cancelada,';
     } catch (\Exception $e) {
       \Drupal::logger('PPSS')->error($e->getMessage());
     }
     \Drupal::logger('PPSS')->info($msg_info);
     $msg = '<div style="text-align: center;  margin: 20px;">
-    <h1> !Cancelación de suscripción en Encuéntralo! &#128577;</h1>
-    <br><div style="text-align: center; font-size: medium;">'.$msg_user.
-    ' sin embargo cuentas con la opción Gratis para continuar publicando tus anuncios o puedes volver a contratar alguno de nuestros <a href=“https://www.encuentralo.digital/planes”>Planes</a>.
+    <h1> ¡Hasta pronto! </h1>
+    <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>
+    <br><div style="text-align: center; font-size: 24px;">'.$msg_user.' mientras tanto recuerda que puedes continuar publicando anuncios con la versión gratuita.
     </div><br><br>
-    <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;"><br>--  El equipo de [site:name]</div></div>';
+    <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;"><br>--  El equipo de Encuéntralo</div></div>';
 
     //Enviar correo a usuario y marketing
     $module = 'ppss';
