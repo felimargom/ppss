@@ -1,5 +1,5 @@
 <?php
-
+use Drupal\Core\Database\Database;
 /**
  * @file
  * Install, update and uninstall functions for the ppss module.
@@ -80,4 +80,97 @@ function ppss_schema()
       ],
     ];
   return $schema;
+}
+
+/**
+ * Implements ppss_update_9101().
+ * Add new field in ppss_sales table.
+ */
+function ppss_update_9101() {
+  $schema = Database::getConnection()->schema();
+  $schema->addField('ppss_sales', 'id_subscription', [
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => FALSE,
+    'description' => 'ID subscription.',
+    'default' => 0,
+  ]);
+  $schema->addField('ppss_sales', 'expire', [
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => FALSE,
+    'description' => 'date  expire.',
+    'default' => null,
+  ]);
+  $schema->addField('ppss_sales', 'id_role', [
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => FALSE,
+    'description' => 'User role ID.',
+    'default' => null,
+  ]);
+}
+
+/**
+ * Implements ppss_update_9102().
+ * Add new table ppss_sales_details.
+ */
+function ppss_update_9102() {
+  //$database = \Drupal::database();
+  $schema = Database::getConnection()->schema();
+
+  $table_name = 'ppss_sales_details';
+  $table_schema = [
+    'description' => 'Details of recurring payments.',
+    'fields' => [
+      'id' => [
+        'description' => 'The primary identifier for the record.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'sid' => [
+        'description' => 'Sale ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'tax' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
+        'not null' => FALSE,
+        'description' => "plan tax",
+      ],
+      'price' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
+        'not null' => FALSE,
+        'description' => "plan price",
+      ],
+      'total' => [
+        'type' => 'numeric', 
+        'precision' => 10, 
+        'scale' => 2, 
+        'not null' => FALSE,
+        'description' => "total",
+      ],
+      'created' => [
+        'description' => 'Timestamp for when was payment.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'event_id' => [
+        'description' => 'Webhook event id.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
+
+  $schema->createTable($table_name, $table_schema);
 }

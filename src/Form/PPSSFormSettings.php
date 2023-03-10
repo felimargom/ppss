@@ -329,7 +329,7 @@ class PPSSFormSettings extends ConfigFormBase
       }
     $ppss_config->save();
     }
-    $this->messenger()->addMessage($this->t('The configuration options have been saved.'));
+    $this->messenger()->addMessage($this->t('The configuration PPSS general options have been saved.'));
     parent::submitForm($form, $form_state);
   }
 
