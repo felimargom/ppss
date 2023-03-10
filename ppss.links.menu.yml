@@ -1,9 +1,16 @@
 ppss.admin_settings_link:
-  title: Payments
+  title: Platform of Payments and Sales Simple
   description: Configure Platform of Payments API keys, fields names, etc.
   route_name: ppss.admin_settings
   parent: system.admin_config_services
   weight: 10
+
+ppss.admin_webhook_link:
+  title: Webhook
+  route_name: ppss.webhook_settings
+  description: Settings for administering the webhook token.
+  parent: ppss.admin_settings_link
+  weight: 20
 
 #ppss.admin_settings_roles_link:
 #  title: Roles & SKUs

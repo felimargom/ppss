@@ -214,31 +214,35 @@ class PPSSConfirmSale extends FormBase
           // Ref.: https://www.drupal.org/docs/drupal-apis/database-api/insert-queries
           $query = Drupal::database()->insert('ppss_sales');
 
-          // Specify the fields taht the query will insert to.
-          $query->fields([
-            'uid',
-            'status',
-            'mail',
-            'platform',
-            'frequency',
-            'frequency_interval',
-            'details',
-            'created',
-          ]);
+        // Specify the fields taht the query will insert to.
+        $query->fields([
+          'uid',
+          'status',
+          'mail',
+          'platform',
+          'frequency',
+          'frequency_interval',
+          'details',
+          'created',
+          'id_subscription',
+          'id_role'
+        ]);
 
-          // Set the values of the fields we selected.
-          // Note that then must be in the same order as we defined them
-          // in the $query->fields([...]) above.
-          $query->values([
-            $uid,
-            1,
-            $email,
-            $paymentPlatform,
-            $frequency,
-            $interval,
-            $retrieveDataSale,
-            $currentTime,
-          ]);
+        // Set the values of the fields we selected.
+        // Note that then must be in the same order as we defined them
+        // in the $query->fields([...]) above.
+        $query->values([
+          $uid,
+          1,
+          $email,
+          $paymentPlatform,
+          $frequency,
+          $interval,
+          $retrieveDataSale,
+          $currentTime,
+          $datosUsuario->id,
+          $newRole
+        ]);
 
           // Execute the query!
           // Drupal handles the exact syntax of the query automatically
