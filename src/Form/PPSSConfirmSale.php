@@ -199,9 +199,11 @@ class PPSSConfirmSale extends FormBase
         ];
       }
 
-      // validate purchase register
-      $query = \Drupal::database()->query("select * from ppss_sales where FROM_UNIXTIME(created,'%d/%m/%Y') = '".date('d/m/Y')."' and uid = $uid");
-      $count_result= count($query->fetchAll());
+      // validate purchase register in ppss_sales
+      $query = \Drupal::database()->select('ppss_sales', 's');
+      $query->condition('id_subscription', $datosUsuario->id);
+      $query->fields('s', ['id']);
+      $count_result= count($query->execute()->fetchAll());
       if ($count_result == 0) {
         // Save all transaction data in DB for future reference.
         try {
@@ -258,6 +260,30 @@ class PPSSConfirmSale extends FormBase
           \Drupal::logger('Sales')->error($errorInfo);
           \Drupal::logger('PPSS')->error($e->getMessage());
         }
+        //get data subscription
+        $query = \Drupal::database()->select('ppss_sales', 's');
+        $query->condition('id_subscription', $datosUsuario->id);
+        $query->fields('s', ['id']);
+        $results = $query->execute()->fetchAll();
+        $subscription = $results[0];
+        $total = $datosUsuario->plan->payment_definitions[0]->charge_models[0]->amount->value + $datosUsuario->plan->payment_definitions[0]->amount->value;
+        //Save all transaction data in ppss_sales_details
+        try {
+          $query = \Drupal::database()->insert('ppss_sales_details');
+          $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
+          $query->values([
+            $subscription->id,
+            $datosUsuario->plan->payment_definitions[0]->charge_models[0]->amount->value,
+            $datosUsuario->plan->payment_definitions[0]->amount->value,
+            $total,
+            $currentTime,
+            0
+          ]);
+          $query->execute();
+        } catch (\Exception $e) {
+          \Drupal::logger('PPSS')->error($e->getMessage());
+        }
+        \Drupal::logger('PPSS')->info('Se ha registrado el primer pago de la suscripción: '.$datosUsuario->id);
       }
     }
 
@@ -272,3 +298,24 @@ class PPSSConfirmSale extends FormBase
     // This method was not used.
   }
 }
+
+{"id":"I-A9TRJ4S4Y4A1",
+  "state":"Active",
+  "description":"Plan B\u00e1sico mensual",
+  "start_date":"2023-03-10T19:00:22Z",
+  "payer":
+  {"payment_method":"paypal",
+    "status":"verified",
+    "payer_info":{"email":"fmartinez@noticiasnet.mx","first_name":"Felicitas","last_name":"Martinez","payer_id":"G8NL2484GTAKA",
+      "shipping_address":{"recipient_name":"","line1":"Calle Juarez 1","line2":"Col. Cuauhtemoc","city":"Miguel Hidalgo","state":"Ciudad de Mexico","postal_code":"11580","country_code":"MX"}}},
+      "shipping_address":{"recipient_name":"","line1":"Calle Juarez 1","line2":"Col. Cuauhtemoc","city":"Miguel Hidalgo","state":"Ciudad de Mexico","postal_code":"11580","country_code":"MX"},
+      "plan":{"payment_definitions":[{"type":"REGULAR","frequency":"MONTH",
+        "amount":{"currency":"MXN","value":"327.59"},"cycles":"0",
+        "charge_models":[{"type":"TAX","amount":{"currency":"MXN","value":"52.41"}},{"type":"SHIPPING",
+          "amount":{"currency":"MXN","value":"0.00"}}],"frequency_interval":"1"}],"merchant_preferences":{"setup_fee":{"currency":"MXN","value":"0.00"},
+          "max_fail_attempts":"0","auto_bill_amount":"YES"}},"links":[{"href":"https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-A9TRJ4S4Y4A1/suspend","rel":"suspend",
+            "method":"POST"},{"href":"https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-A9TRJ4S4Y4A1/re-activate","rel":"re_activate","method":"POST"},
+            {"href":"https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-A9TRJ4S4Y4A1/cancel","rel":"cancel","method":"POST"},
+            {"href":"https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-A9TRJ4S4Y4A1/bill-balance","rel":"self","method":"POST"},
+            {"href":"https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-A9TRJ4S4Y4A1/set-balance","rel":"self","method":"POST"}],
+          "agreement_details":{"outstanding_balance":{"currency":"MXN","value":"0.00"},"cycles_remaining":"0","cycles_completed":"0","next_billing_date":"2023-03-10T10:00:00Z","failed_payment_count":"0"}}

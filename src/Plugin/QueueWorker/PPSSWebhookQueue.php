@@ -63,7 +63,6 @@ class PPSSWebhookQueue extends QueueWorkerBase implements ContainerFactoryPlugin
 
       // Decode the JSON payload to a PHP object.
       $entity_data = json_decode($payload);
-      \Drupal::logger('PPSS')->error($entity_data->event_type);
       
       switch($entity_data->event_type) {
         case 'BILLING.SUBSCRIPTION.CANCELLED':

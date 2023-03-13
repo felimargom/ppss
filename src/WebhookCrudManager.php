@@ -117,12 +117,13 @@ class WebhookCrudManager {
       $langcode = \Drupal::currentUser()->getPreferredLangcode();
       $send = true;
       $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $langcode, $params, NULL, $send);
-      if ($result['result'] !== true) {
-        \Drupal::messenger()->addMessage(t('There was a problem sending your message and it was not sent.'), 'error');
-      }
-      else {
-        \Drupal::messenger()->addMessage(t('Your message has been sent.'));
-      }
+      if ($result['result'] != true) {
+      $msg_mail = t('There was a problem sending your message and it was not sent.');
+    }
+    else {
+      $msg_mail = t('Your email has been sent.');
+    }
+    \Drupal::logger('PPSS')->info($msg_mail);
     }
   }
 
