@@ -25,6 +25,7 @@ function ppss_cron(){
   //obtener registros de ventas con fecha de vencimiento 
   $query = \Drupal::database()->select('ppss_sales', 's');
   $query->condition('expire', $today);
+  $query->condition('status', 1, '=');
   $query->fields('s', ['id', 'uid', 'id_role', 'mail']);
   $query->orderBy('id', 'DESC');
   $results = $query->execute()->fetchAll();
@@ -44,6 +45,18 @@ function ppss_cron(){
       \Drupal::logger('PPSS')->error($e->getMessage());
     }
     \Drupal::logger('PPSS')->info($msg_info);
+
+    //validar tipo de rol enterprise de plan Negocio
+    if($subscription->id_role == 'enterprise') {
+      //despublicar todos los anuncios del usuario
+      $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)->condition('type', 'nvi_anuncios_e')->execute();
+      $entity = \Drupal::entityTypeManager()->getStorage("node");
+      $nodes = $entity->loadMultiple($nids);
+      foreach ($nodes as $node) {
+        $node->setUnpublished();
+        $node->save();
+      }
+    }
     $msg = '<div style="text-align: center;  margin: 20px;">
     <h1> ¡Hasta pronto! </h1>
     <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>
@@ -60,11 +73,12 @@ function ppss_cron(){
     $langcode = \Drupal::currentUser()->getPreferredLangcode();
     $send = true;
     $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $langcode, $params, NULL, $send);
-    if ($result['result'] !== true) {
-      \Drupal::messenger()->addMessage(t('There was a problem sending your message and it was not sent.'), 'error');
+    if ($result['result'] != true) {
+      $msg_mail = t('There was a problem sending your message and it was not sent.');
     }
     else {
-      \Drupal::messenger()->addMessage(t('Your message has been sent.'));
+      $msg_mail = t('Your email has been sent.');
     }
+    \Drupal::logger('PPSS')->info($msg_mail);
   }
 }

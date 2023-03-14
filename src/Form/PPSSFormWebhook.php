@@ -44,14 +44,7 @@ class PPSSFormWebhook extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::SETTINGS);
 
-    // Define a field used to capture the stored auth token value.
-    $form['token'] = [
-      '#type' => 'textfield',
-      '#title' => t('Authorization Token'),
-      '#required' => TRUE,
-      '#default_value' => $config->get('token'),
-      '#description' => t('The expected value in the Authorization header, often an API key or similar secret.'),
-    ];
+    // Define a field used to capture the stored webhook_id value.
     $form['webhook_id'] = [
       '#type' => 'textfield',
       '#title' => t('Webhook ID'),
@@ -69,8 +62,7 @@ class PPSSFormWebhook extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Retrieve the configuration.
     $this->configFactory->getEditable(static::SETTINGS)
-      // Save the submitted token value.
-      ->set('token', $form_state->getValue('token'))
+      // Save the submitted webhook_id value.
       ->set('webhook_id', $form_state->getValue('webhook_id'))
       ->save();
 

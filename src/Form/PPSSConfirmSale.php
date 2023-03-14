@@ -199,9 +199,11 @@ class PPSSConfirmSale extends FormBase
         ];
       }
 
-      // validate purchase register
-      $query = \Drupal::database()->query("select * from ppss_sales where FROM_UNIXTIME(created,'%d/%m/%Y') = '".date('d/m/Y')."' and uid = $uid");
-      $count_result= count($query->fetchAll());
+      // validate purchase register in ppss_sales
+      $query = \Drupal::database()->select('ppss_sales', 's');
+      $query->condition('id_subscription', $datosUsuario->id);
+      $query->fields('s', ['id']);
+      $count_result= count($query->execute()->fetchAll());
       if ($count_result == 0) {
         // Save all transaction data in DB for future reference.
         try {
@@ -258,6 +260,30 @@ class PPSSConfirmSale extends FormBase
           \Drupal::logger('Sales')->error($errorInfo);
           \Drupal::logger('PPSS')->error($e->getMessage());
         }
+        //get data subscription
+        $query = \Drupal::database()->select('ppss_sales', 's');
+        $query->condition('id_subscription', $datosUsuario->id);
+        $query->fields('s', ['id']);
+        $results = $query->execute()->fetchAll();
+        $subscription = $results[0];
+        $total = $datosUsuario->plan->payment_definitions[0]->charge_models[0]->amount->value + $datosUsuario->plan->payment_definitions[0]->amount->value;
+        //Save all transaction data in ppss_sales_details
+        try {
+          $query = \Drupal::database()->insert('ppss_sales_details');
+          $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
+          $query->values([
+            $subscription->id,
+            $datosUsuario->plan->payment_definitions[0]->charge_models[0]->amount->value,
+            $datosUsuario->plan->payment_definitions[0]->amount->value,
+            $total,
+            $currentTime,
+            0
+          ]);
+          $query->execute();
+        } catch (\Exception $e) {
+          \Drupal::logger('PPSS')->error($e->getMessage());
+        }
+        \Drupal::logger('PPSS')->info('Se ha registrado el primer pago de la suscripción: '.$datosUsuario->id);
       }
     }
 
