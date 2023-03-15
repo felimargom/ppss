@@ -67,7 +67,7 @@ function ppss_cron(){
     //Enviar correo a usuario y marketing
     $module = 'ppss';
     $key = 'cancel_subscription';
-    $to = $subscription->mail."; marketing@noticiasnet.mx";
+    $to = $subscription->mail.";".\Drupal::config('system.site')->get('mail');
     $params['message'] = $msg;
     $params['subject'] = "Cancelación de suscripción - Encuéntralo";
     $langcode = \Drupal::currentUser()->getPreferredLangcode();
