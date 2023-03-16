@@ -58,7 +58,7 @@ class WebhookCrudManager
     $query->fields('sd',['id', 'created']);
     $query->orderBy('created', 'DESC');
     $results = $query->execute()->fetchAll();
-    if (count($results) > 0) {
+    if (!empty($results)) {
       $subscription = $results[0]; // get the last payment
       // Validate supscription end date
       // o last payment date add +1 frecuency(month/year)
