@@ -151,7 +151,7 @@ class WebhookCrudManager
       if(count($payment) == 1){
         \Drupal::database()->update('ppss_sales_details')->fields([
           'event_id' => $data->id,
-        ])->condition('sid', $payment[0]->id, '=')->execute();
+        ])->condition('id', $payment[0]->id, '=')->execute();
       } else {
         $query = \Drupal::database()->insert('ppss_sales_details');
         $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
