@@ -54,15 +54,16 @@ class WebhookCrudManager
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->join('ppss_sales_details', 'sd', 's.id = sd.sid');
     $query->condition('id_subscription', $id);
-    $query->fields('s', ['id','uid','frequency', 'status', 'id_role', 'mail']);
+    $query->fields('s', ['id','uid','frequency', 'frequency_interval', 'status', 'id_role', 'mail']);
     $query->fields('sd',['id', 'created']);
     $query->orderBy('created', 'DESC');
     $results = $query->execute()->fetchAll();
     if (!empty($results)) {
       $subscription = $results[0]; // get the last payment
+      $user = \Drupal\user\Entity\User::load($subscription->uid); //get subscription user
       // Validate supscription end date
       // o last payment date add +1 frecuency(month/year)
-      $expire = strtotime(date('d-m-Y', $subscription->created). ' + 1 '.$subscription->frequency.'');
+      $expire = strtotime(date('d-m-Y', $subscription->created). ' + '.$subscription->frequency_interval . $subscription->frequency);
       $today = date('d-m-Y');
       // Validate expiration date with current expiration date
       if (date('d-m-Y', $expire) == $today) {
@@ -73,7 +74,6 @@ class WebhookCrudManager
   
         // Remove user role added by subscription purchased
         try {
-          $user = \Drupal\user\Entity\User::load($subscription->uid);
           $user->removeRole($subscription->id_role);
           $user->save();
           $msg_info = 'Se ha cancelado la suscripción de plan '.$subscription->id_role.
@@ -116,7 +116,7 @@ class WebhookCrudManager
       // Send alert by email to stakeholders
       $module = 'ppss';
       $key = 'cancel_subscription';
-      $to = $subscription->mail.";".\Drupal::config('system.site')->get('mail');
+      $to = $user->getEmail().";".\Drupal::config('system.site')->get('mail');
       $params['message'] = $msg;
       $params['subject'] = "Cancelación de suscripción - Encuéntralo";
       $langcode = \Drupal::currentUser()->getPreferredLangcode();
