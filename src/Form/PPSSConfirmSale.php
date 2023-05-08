@@ -74,8 +74,11 @@ class PPSSConfirmSale extends FormBase
         
         try {
           // Execute agreement
+          \Drupal::logger('PPSS')->error('Before get objAgreement.');
           $objAgreement->execute($token, $apiContext);
+          \Drupal::logger('PPSS')->error('Before get objPayment.');
           $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
+          \Drupal::logger('PPSS')->error('Everything looks fine.');
 
         } catch (\PayPal\Exception\PayPalConnectionException $ex) {
           \Drupal::logger('PPSS')->error($ex->getData());
