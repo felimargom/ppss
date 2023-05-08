@@ -42,13 +42,31 @@ class PPSSConfirmSale extends FormBase
     $config = \Drupal::config('ppss.settings');
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
+    $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'INFO' : 'DEBUG';
     
     $apiContext = new ApiContext(
       new OAuthTokenCredential($clientId, $clientSecret)
     );
 
+    $apiContext->setConfig(
+      array(
+        'mode' => $sandbox,
+        'log.LogEnabled' => true,
+        'log.FileName' => '../web/paypal/PayPal.log',
+        'log.LogLevel' => $logLevel, // PLEASE USE `INFO` LEVEL FOR LOGGING IN LIVE ENVIRONMENTS
+        'cache.enabled' => true,
+        'cache.FileName' => '../web/paypal/PaypalCache', // for determining paypal cache directory
+        'http.CURLOPT_CONNECTTIMEOUT' => 30
+        // 'http.headers.PayPal-Partner-Attribution-Id' => '123123123'
+        //'log.AdapterFactory' => '\PayPal\Log\DefaultLogFactory'
+        // Factory class implementing \PayPal\Log\PayPalLogFactory
+      ));
+
     \Drupal::logger('PPSS')->error('clientId: '.$clientId);
     \Drupal::logger('PPSS')->error('clientSecret: '.$clientSecret);
+    \Drupal::logger('PPSS')->error('sandbox: '.$sandbox);
+    \Drupal::logger('PPSS')->error('sandbox: '.$logLevel);
 
     if (!(is_null($node))) {
       $payment_id = \Drupal::request()->query->get('paymentId');
@@ -77,7 +95,7 @@ class PPSSConfirmSale extends FormBase
           \Drupal::logger('PPSS')->error('Before get objAgreement.');
           $objAgreement->execute($token, $apiContext);
           \Drupal::logger('PPSS')->error('Before get objPayment.');
-          $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
+          // $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
           \Drupal::logger('PPSS')->error('Everything looks fine.');
 
         } catch (\PayPal\Exception\PayPalConnectionException $ex) {
