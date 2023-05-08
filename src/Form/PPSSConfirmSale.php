@@ -43,7 +43,7 @@ class PPSSConfirmSale extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
     $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
-    $logLevel = $config->get('sandbox_mode') == TRUE ? 'INFO' : 'DEBUG';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'DEBUG' : 'INFO';
     
     $apiContext = new ApiContext(
       new OAuthTokenCredential($clientId, $clientSecret)
@@ -62,11 +62,6 @@ class PPSSConfirmSale extends FormBase
         //'log.AdapterFactory' => '\PayPal\Log\DefaultLogFactory'
         // Factory class implementing \PayPal\Log\PayPalLogFactory
       ));
-
-    \Drupal::logger('PPSS')->error('clientId: '.$clientId);
-    \Drupal::logger('PPSS')->error('clientSecret: '.$clientSecret);
-    \Drupal::logger('PPSS')->error('sandbox: '.$sandbox);
-    \Drupal::logger('PPSS')->error('sandbox: '.$logLevel);
 
     if (!(is_null($node))) {
       $payment_id = \Drupal::request()->query->get('paymentId');
@@ -92,12 +87,9 @@ class PPSSConfirmSale extends FormBase
         
         try {
           // Execute agreement
-          \Drupal::logger('PPSS')->error('Before get objAgreement.');
           $objAgreement->execute($token, $apiContext);
-          \Drupal::logger('PPSS')->error('Before get objPayment.');
-          // $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
-          \Drupal::logger('PPSS')->error('Everything looks fine.');
-
+          $objPayment = Agreement::get($objAgreement->getId(), $apiContext);
+          
         } catch (\PayPal\Exception\PayPalConnectionException $ex) {
           \Drupal::logger('PPSS')->error($ex->getData());
         }
