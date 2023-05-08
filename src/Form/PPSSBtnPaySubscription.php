@@ -74,7 +74,7 @@ class PPSSBtnPaySubscription extends FormBase
     $clientId = $config->get('client_id');
     $clientSecret = $config->get('client_secret');
     $sandbox = $config->get('sandbox_mode') == TRUE ? 'sandbox' : 'live';
-    $logLevel = $config->get('sandbox_mode') == TRUE ? 'DEBUG' : 'INFO';
+    $logLevel = $config->get('sandbox_mode') == TRUE ? 'INFO' : 'DEBUG';
     $fieldPrice = $config->get('field_price');
     $fieldDescription = $config->get('field_description');
     $fieldSku = $config->get('field_sku');
