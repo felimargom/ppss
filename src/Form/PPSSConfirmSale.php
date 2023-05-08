@@ -47,8 +47,8 @@ class PPSSConfirmSale extends FormBase
       new OAuthTokenCredential($clientId, $clientSecret)
     );
 
-    \Drupal::logger('PPSS')->info('clientId: '.$clientId);
-    \Drupal::logger('PPSS')->info('clientSecret: '.$clientSecret);
+    \Drupal::logger('PPSS')->error('clientId: '.$clientId);
+    \Drupal::logger('PPSS')->error('clientSecret: '.$clientSecret);
 
     if (!(is_null($node))) {
       $payment_id = \Drupal::request()->query->get('paymentId');
@@ -68,7 +68,7 @@ class PPSSConfirmSale extends FormBase
         $objPayment->execute($execution, $apiContext);
       
       } else {
-        \Drupal::logger('PPSS')->info('Try to create a new Agreement with this token: '.$token);
+        \Drupal::logger('PPSS')->error('Try to create a new Agreement with this token: '.$token);
         // It's recurring payment. A new agreement between the user and PayPal it's required.
         $objAgreement = new Agreement();
         
