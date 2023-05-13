@@ -46,17 +46,6 @@ function ppss_cron(){
     }
     \Drupal::logger('PPSS')->info($msg_info);
 
-    //validar tipo de rol enterprise de plan Negocio
-    if($subscription->id_role == 'enterprise') {
-      //despublicar todos los anuncios del usuario
-      $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)->condition('type', 'nvi_anuncios_e')->execute();
-      $entity = \Drupal::entityTypeManager()->getStorage("node");
-      $nodes = $entity->loadMultiple($nids);
-      foreach ($nodes as $node) {
-        $node->setUnpublished();
-        $node->save();
-      }
-    }
     $msg = '<div style="text-align: center;  margin: 20px;">
     <h1> ¡Hasta pronto! </h1>
     <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>

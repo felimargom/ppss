@@ -65,6 +65,21 @@ class WebhookCrudManager
       // o last payment date add +1 frecuency(month/year)
       $expire = strtotime(date('d-m-Y', $subscription->created). ' + '.$subscription->frequency_interval . $subscription->frequency);
       $today = date('d-m-Y');
+
+      // Get content type based on role
+      if ($subscription->id_role == 'enterprise') {
+        $typeContent = "article";
+      } elseif($subscription->id_role == 'comercial') {
+        $typeContent = "nvi_anuncios_c";
+      } elseif($subscription->id_role == 'basic') {
+        $typeContent = "nvi_anuncios_b";
+      }
+      //get all user ads by content type
+      $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)
+        ->condition('type', $typeContent)->condition('status', 1)->execute();
+      $entity = \Drupal::entityTypeManager()->getStorage("node");
+      $nodes = $entity->loadMultiple($nids);
+
       // Validate expiration date with current expiration date
       if (date('d-m-Y', $expire) == $today) {
         // Update ppss_sales table
@@ -79,6 +94,13 @@ class WebhookCrudManager
           $msg_info = 'Se ha cancelado la suscripción de plan '.$subscription->id_role.
             ' del usuario '.$subscription->uid;
           $msg_user = 'Tu suscripción ha sido cancelada, ';
+
+          // Unpublish all ads setting a new date in the future
+          foreach ($nodes as $node) {
+            $node->unpublish_on = $expire;
+            $node->setUnpublished();
+            $node->save();
+          }
         } catch (\Exception $e) {
           \Drupal::logger('PPSS')->error($e->getMessage());
         }
@@ -90,14 +112,8 @@ class WebhookCrudManager
           ' la cancelación de la suscripción de plan '.$subscription->id_role.
           ' del usuario '.$subscription->uid;
         $msg_user = 'Tu suscripción ha sido programada para cancelar el día '.date('d-m-Y', $expire);
-      }
-      // Validate role type 'enterprise' of 'Plan Negocio'
-      if ($subscription->id_role == 'enterprise') {
+
         // Unpublish all ads setting a new date in the future
-        $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)
-          ->condition('type', 'nvi_anuncios_e')->execute();
-        $entity = \Drupal::entityTypeManager()->getStorage("node");
-        $nodes = $entity->loadMultiple($nids);
         foreach ($nodes as $node) {
           $node->unpublish_on = $expire;
           $node->save();
