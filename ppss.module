@@ -20,9 +20,9 @@ function ppss_mail($key, &$message, $params) {
  * Implements hook_cron().
  */
 function ppss_cron(){
-  //desactivar planes de usuarios que han cancelado suscripción
+  //disable user subscription
   $today = strtotime(date('d-m-Y'));
-  //obtener registros de ventas con fecha de vencimiento 
+  //get sales with expiration date 
   $query = \Drupal::database()->select('ppss_sales', 's');
   $query->condition('expire', $today);
   $query->condition('status', 1, '=');
@@ -30,11 +30,11 @@ function ppss_cron(){
   $query->orderBy('id', 'DESC');
   $results = $query->execute()->fetchAll();
   foreach($results as $subscription) {
-    //actualizar la tabla de ppss_sales
+    // Update status ppss_sales table
     \Drupal::database()->update('ppss_sales')->fields([
       'status' => 0,
     ])->condition('id', $subscription->id, '=')->execute();
-    //Eliminar rol asignado de la suscripción del usuario 
+    // Remove user role added by subscription purchased
     try {
       $user = \Drupal\user\Entity\User::load($subscription->uid); 
       $user->removeRole($subscription->id_role);
@@ -46,17 +46,27 @@ function ppss_cron(){
     }
     \Drupal::logger('PPSS')->info($msg_info);
 
-    //validar tipo de rol enterprise de plan Negocio
-    if($subscription->id_role == 'enterprise') {
-      //despublicar todos los anuncios del usuario
-      $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)->condition('type', 'nvi_anuncios_e')->execute();
-      $entity = \Drupal::entityTypeManager()->getStorage("node");
-      $nodes = $entity->loadMultiple($nids);
-      foreach ($nodes as $node) {
-        $node->setUnpublished();
-        $node->save();
-      }
+    // Unpublish ads posted after scheduling plan cancellation
+    // Get content type based on role
+    if ($subscription->id_role == 'enterprise') {
+      $typeContent = "article";
+    } elseif($subscription->id_role == 'comercial') {
+      $typeContent = "nvi_anuncios_c";
+    } elseif($subscription->id_role == 'basic') {
+      $typeContent = "nvi_anuncios_b";
     }
+    // Get all user ads by content type
+    $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)
+      ->condition('type', $typeContent)->condition('status', 1)->execute();
+    $entity = \Drupal::entityTypeManager()->getStorage("node");
+    $nodes = $entity->loadMultiple($nids);
+    // Unpublish all ads
+    foreach ($nodes as $node) {
+      $node->unpublish_on = $today;
+      $node->setUnpublished();
+      $node->save();
+    }
+
     $msg = '<div style="text-align: center;  margin: 20px;">
     <h1> ¡Hasta pronto! </h1>
     <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>
@@ -64,7 +74,7 @@ function ppss_cron(){
     </div><br><br>
     <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;"><br>--  El equipo de Encuéntralo</div></div>';
 
-    //Enviar correo a usuario y marketing
+    // Send alert by email to stakeholders
     $module = 'ppss';
     $key = 'cancel_subscription';
     $to = $user->getEmail().";".\Drupal::config('system.site')->get('mail');
