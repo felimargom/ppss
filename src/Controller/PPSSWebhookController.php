@@ -116,29 +116,33 @@ class PPSSWebhookController extends ControllerBase
     $transmissionSig = $this->request->headers->get('paypal-transmission-sig');
     $paypalCertUrl = $this->request->headers->get('paypal-cert-url');
 
-    // data: <transmissionId>|<timeStamp>|<webhookId>|<crc32>
-    $verifyAccess = openssl_verify(
-      data: implode(separator: '|', array:
-      [
-        $transmissionId,
-        $timeStamp,
-        $webhookId,
-        crc32(string: $payload),
-      ]),
-      signature: base64_decode(string: $transmissionSig),
-      public_key: openssl_pkey_get_public(public_key: file_get_contents(filename: $paypalCertUrl)),
-      algorithm: 'sha256WithRSAEncryption',
-    );
-
-    if ($verifyAccess === 1) {
-      $accessAllowed = true;
-    } elseif ($verifyAccess === 0) {
-      $accessAllowed = false;
+    if(empty($transmissionId) || empty($timeStamp) || empty($transmissionSig) || empty($paypalCertUrl)) {
+      \Drupal::logger('PPSS')->error('Error, missing data in request header');
+      $verifyAccess = 0;
     } else {
-      \Drupal::logger('PPSS')->error('Error checking signature');
-      $accessAllowed = false;
-    }
+      // data: <transmissionId>|<timeStamp>|<webhookId>|<crc32>
+      $verifyAccess = openssl_verify(
+        data: implode(separator: '|', array:
+        [
+          $transmissionId,
+          $timeStamp,
+          $webhookId,
+          crc32(string: $payload),
+        ]),
+        signature: base64_decode(string: $transmissionSig),
+        public_key: openssl_pkey_get_public(public_key: file_get_contents(filename: $paypalCertUrl)),
+        algorithm: 'sha256WithRSAEncryption',
+      );
 
+      if ($verifyAccess === 1) {
+        $accessAllowed = true;
+      } elseif ($verifyAccess === 0) {
+        $accessAllowed = false;
+      } else {
+        \Drupal::logger('PPSS')->error('Error checking signature');
+        $accessAllowed = false;
+      }
+    }
     // If they validation was successful, allow access to the route.
     return AccessResult::allowedIf($verifyAccess); // Please review, validation don't work.
   }
