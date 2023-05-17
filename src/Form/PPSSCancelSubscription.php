@@ -24,7 +24,7 @@ class PPSSCancelSubscription extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $user = NULL, $id = NULL) {
     $user_id = \Drupal::currentUser()->hasPermission('access user profiles') ? $user : $this->currentUser()->id();
-    //validar que exista la suscripción y que este activa
+    // Get subscription by id
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id', $id);
     $query->condition('uid', $user_id);
@@ -91,7 +91,7 @@ class PPSSCancelSubscription extends FormBase {
     if($form_state->getValue('reason') == '5') {
       $reason = $form_state->getValue('other');
     }
-    //llamar al servicio
+    //call the service for cancellation
     $cancel = \Drupal::service('ppss.webhook_crud')->cancelSubscriptionE($id, $reason);
     $this->messenger()->addWarning($cancel);
     $form_state->setRedirect('iss.show_purchase', ['user' => \Drupal::routeMatch()->getParameter('user'), 'id' => $id]);

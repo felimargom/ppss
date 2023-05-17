@@ -50,7 +50,7 @@ class WebhookCrudManager
    */
   public function cancelSubscription($id)
   {
-    //obtener los datos de la venta
+    // Get sales data
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->join('ppss_sales_details', 'sd', 's.id = sd.sid');
     $query->condition('id_subscription', $id);
@@ -165,12 +165,16 @@ class WebhookCrudManager
     $details = json_decode($subscription->details);
     
     try {
+      // Get the number of payments
       $payment = \Drupal::database()->select('ppss_sales_details', 's')->condition('sid', $subscription->id)->condition('event_id', 0)->fields('s')->execute()->fetchAll();
       if(count($payment) == 1){
+        // if it is the first payment
+        // update event_id from webhook
         \Drupal::database()->update('ppss_sales_details')->fields([
           'event_id' => $data->id,
         ])->condition('id', $payment[0]->id, '=')->execute();
       } else {
+        // Insert a new recurring payment
         $query = \Drupal::database()->insert('ppss_sales_details');
         $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
         $query->values([
@@ -195,7 +199,7 @@ class WebhookCrudManager
    */
   public function cancelSubscriptionE($id, $reason)
   {
-    //validar que exista la suscripción y que este activa
+    // Get active subscription
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id', $id);
     $query->condition('status', 1);
@@ -204,7 +208,7 @@ class WebhookCrudManager
     $result = $query->execute()->fetchAssoc();
     if($result) {
       $data = [];
-      //razon de la cancelación
+      //reason for cancellation
       $data['reason'] = $reason;
       try {
         //cancel subscription paypal
