@@ -49,7 +49,7 @@ function ppss_cron(){
     // Unpublish ads posted after scheduling plan cancellation
     // Get content type based on role
     if ($subscription->id_role == 'enterprise') {
-      $typeContent = "article";
+      $typeContent = "nvi_anuncios_e";
     } elseif($subscription->id_role == 'comercial') {
       $typeContent = "nvi_anuncios_c";
     } elseif($subscription->id_role == 'basic') {
@@ -62,14 +62,14 @@ function ppss_cron(){
     $nodes = $entity->loadMultiple($nids);
     // Unpublish all ads
     foreach ($nodes as $node) {
-      $node->unpublish_on = $today;
+      $node->unpublish_on = strtotime(date('d-m-Y H:i:s'));;
       $node->setUnpublished();
       $node->save();
     }
 
     $msg = '<div style="text-align: center;  margin: 20px;">
     <h1> ¡Hasta pronto! </h1>
-    <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>
+    <h1> ¡Cancelación de suscripción en Encuéntralo! &#128522;</h1>
     <br><div style="text-align: center; font-size: 24px;">'.$msg_user.' mientras tanto recuerda que puedes continuar publicando anuncios con la versión gratuita.
     </div><br><br>
     <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;"><br>--  El equipo de Encuéntralo</div></div>';

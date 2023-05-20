@@ -50,7 +50,7 @@ class WebhookCrudManager
    */
   public function cancelSubscription($id)
   {
-    //obtener los datos de la venta
+    // Get sales data
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->join('ppss_sales_details', 'sd', 's.id = sd.sid');
     $query->condition('id_subscription', $id);
@@ -68,7 +68,7 @@ class WebhookCrudManager
 
       // Get content type based on role
       if ($subscription->id_role == 'enterprise') {
-        $typeContent = "article";
+        $typeContent = "nvi_anuncios_e";
       } elseif($subscription->id_role == 'comercial') {
         $typeContent = "nvi_anuncios_c";
       } elseif($subscription->id_role == 'basic') {
@@ -93,7 +93,9 @@ class WebhookCrudManager
           $user->save();
           $msg_info = 'Se ha cancelado la suscripción de plan '.$subscription->id_role.
             ' del usuario '.$subscription->uid;
-          $msg_user = 'Tu suscripción ha sido cancelada, ';
+          $params['subject'] = "Cancelación de suscripción - Encuéntralo";//mail subject
+          $title = '¡Cancelación de suscripción en Encuéntralo!';
+          $msg_user = 'Tu suscripción ha sido cancelada, mientras tanto recuerda que puedes continuar publicando anuncios con la versión gratuita';
 
           // Unpublish all ads setting a new date in the future
           foreach ($nodes as $node) {
@@ -111,7 +113,10 @@ class WebhookCrudManager
         $msg_info = 'Se ha programado con fecha '.date('d-m-Y', $expire).
           ' la cancelación de la suscripción de plan '.$subscription->id_role.
           ' del usuario '.$subscription->uid;
-        $msg_user = 'Tu suscripción ha sido programada para cancelar el día '.date('d-m-Y', $expire);
+        $params['subject'] = "Cancelación de pagos de suscripción - Encuéntralo";//mail subject
+        $title = '¡Cancelación de pagos de suscripción en Encuéntralo!';
+        $msg_user = 'Tu suscripción ha sido programada para cancelar el día '.date('d-m-Y', $expire).
+        ' mientras tanto recuerda que puedes continuar publicando tus anuncios';
 
         // Unpublish all ads setting a new date in the future
         foreach ($nodes as $node) {
@@ -122,10 +127,8 @@ class WebhookCrudManager
       \Drupal::logger('PPSS')->info($msg_info);
       $msg = '<div style="text-align: center;  margin: 20px;">
         <h1> ¡Hasta pronto! </h1>
-        <h1> !Cancelación de suscripción en Encuéntralo! &#128522;</h1>
-        <br><div style="text-align: center; font-size: 24px;">'.$msg_user.
-        ' mientras tanto recuerda que puedes continuar publicando anuncios con la versión gratuita.
-        </div><br><br>
+        <h1> '.$title.' &#128522;</h1>
+        <br><div style="text-align: center; font-size: 24px;">'.$msg_user.'</div><br><br>
         <div style="text-align: center; border-top: 1px solid #bdc1c6; padding-top: 20px; font-style: italic; font-size: medium; color: #83878c;">
         <br>--  El equipo de Encuéntralo</div></div>';
 
@@ -134,7 +137,6 @@ class WebhookCrudManager
       $key = 'cancel_subscription';
       $to = $user->getEmail().";".\Drupal::config('system.site')->get('mail');
       $params['message'] = $msg;
-      $params['subject'] = "Cancelación de suscripción - Encuéntralo";
       $langcode = \Drupal::currentUser()->getPreferredLangcode();
       $send = true;
       $result = \Drupal::service('plugin.manager.mail')->mail($module, $key, $to, $langcode, $params, NULL, $send);
@@ -163,12 +165,16 @@ class WebhookCrudManager
     $details = json_decode($subscription->details);
     
     try {
+      // Get the number of payments
       $payment = \Drupal::database()->select('ppss_sales_details', 's')->condition('sid', $subscription->id)->condition('event_id', 0)->fields('s')->execute()->fetchAll();
       if(count($payment) == 1){
+        // if it is the first payment
+        // update event_id from webhook
         \Drupal::database()->update('ppss_sales_details')->fields([
           'event_id' => $data->id,
         ])->condition('id', $payment[0]->id, '=')->execute();
       } else {
+        // Insert a new recurring payment
         $query = \Drupal::database()->insert('ppss_sales_details');
         $query->fields(['sid', 'tax', 'price', 'total', 'created', 'event_id']);
         $query->values([
@@ -193,7 +199,7 @@ class WebhookCrudManager
    */
   public function cancelSubscriptionE($id, $reason)
   {
-    //validar que exista la suscripción y que este activa
+    // Get active subscription
     $query = \Drupal::database()->select('ppss_sales', 's');
     $query->condition('id', $id);
     $query->condition('status', 1);
@@ -202,7 +208,7 @@ class WebhookCrudManager
     $result = $query->execute()->fetchAssoc();
     if($result) {
       $data = [];
-      //razon de la cancelación
+      //reason for cancellation
       $data['reason'] = $reason;
       try {
         //cancel subscription paypal
