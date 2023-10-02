@@ -117,6 +117,7 @@ class PPSSConfirmSale extends FormBase
           //  PayPal exist, if not, trying to create an account with data returned.
           
           $ids = \Drupal::entityQuery('user')
+            ->accessCheck(TRUE)
             ->condition('mail', $email)
             ->execute();
 
@@ -190,6 +191,7 @@ class PPSSConfirmSale extends FormBase
 
           // Get the uid of the new user.
           $ids = \Drupal::entityQuery('user')
+            ->accessCheck(TRUE)
             ->condition('mail', $email)
             ->execute();
             

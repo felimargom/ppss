@@ -75,7 +75,9 @@ class WebhookCrudManager
         $typeContent = "nvi_anuncios_b";
       }
       //get all user ads by content type
-      $nids = \Drupal::entityQuery("node")->condition('uid', $subscription->uid)
+      $nids = \Drupal::entityQuery("node")
+        ->accessCheck(TRUE)
+        ->condition('uid', $subscription->uid)
         ->condition('type', $typeContent)->condition('status', 1)->execute();
       $entity = \Drupal::entityTypeManager()->getStorage("node");
       $nodes = $entity->loadMultiple($nids);
